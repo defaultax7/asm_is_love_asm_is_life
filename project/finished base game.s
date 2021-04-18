@@ -183,6 +183,7 @@ process_game_win:
 
 enemy_shoot:
 	# call Enemyshot syscall
+	li $a1,0 #$a0 and $a1 will be used for storing brick walls hit by enemy bullet
 	li $v0, 112
 	syscall
 	li $t0,1
@@ -499,6 +500,7 @@ new_bullet:
 
 nb_up_bullet:
 	sub $s1,$s1, $s3
+	sub $s1,$s1, $s3  # ??? why
 	sub $s2, $s2, $s3
 	subi $s2, $s2, 16
 	la $t0, bullet_locs
@@ -531,7 +533,6 @@ nb_down_bullet:
 
 nb_left_bullet:
 
-	# ???
 	# as the location start from top-left, adjustment by adding half of the bullet size is needed to make it start from the center
 	sub $s1 , $s1 , $s3 
 	sub $s2 , $s2 , $s3
@@ -665,6 +666,7 @@ check_bullet_collision:
 	addi $s1,$a0,0
 	addi $s2,$a1,0
 	addi $s3,$a2,0
+	add $a2,$a2,$a2 #pass the full size
 	jal hit_border
 	li $a0, 2 #collision type
 	beq $v0, $zero, cbc_top_left
@@ -700,7 +702,7 @@ cbc_top_right:
 	# $a0 is the right edge of bullet
 	add $a0 , $s1 , $s3 
 	add $a0 , $a0 , $s3
-	addi $a0 , $a0 , -1 # -1 as after adding the full size of the bullet, the location is point to the next grid instead of right most end of the bullet
+	#addi $a0 , $a0 , -1 # -1 as after adding the full size of the bullet, the location is point to the next grid instead of right most end of the bullet
 	
 	# $a1 point to the top
 	add $a1 , $s2 , 0
@@ -721,7 +723,7 @@ cbc_top_right_grid:
 	# $a0 point to the right
 	add $a0 , $s1 , $s3 
 	add $a0 , $a0 , $s3
-	addi $a0 , $a0 , -1 # -1 as after adding the full size of the bullet, the location is point to the next grid instead of right most end of the bullet
+	#addi $a0 , $a0 , -1 # -1 as after adding the full size of the bullet, the location is point to the next grid instead of right most end of the bullet
 	
 	# $a1 point to the top
 	add $a1 , $s2 , 0	
@@ -744,7 +746,7 @@ cbc_bottom_left:
 	add $a0, $s1, $zero 	
 	add $a1, $s2, $s3
 	add $a1, $a1, $s3
-	addi $a1, $a1, -1 
+	# addi $a1, $a1, -1 This line is removed
 	jal check_hit_enemy
 	add $a0,$v0,$zero
 	slt $v0, $zero, $v0 
@@ -767,10 +769,10 @@ cbc_bottom_left_grid:
 cbc_bottom_right:
 	add $a0, $s1, $s3 
 	add $a0, $a0, $s3 
-	addi $a0, $a0, -1 	
+	# addi $a0, $a0, -1 This line is removed
 	add $a1, $s2, $s3
 	add $a1, $a1, $s3
-	addi $a1, $a1, -1
+	# addi $a1, $a1, -1 This line is removed
 	jal check_hit_enemy
 	add $a0,$v0,$zero
 	slt $v0, $zero, $v0 
@@ -1200,9 +1202,6 @@ pmi_change_dir:
 hit_border:
 #*** Your code starts here
 
-#*** Your code ends here
-
-	# ???
 	la $t0 , maze_size # point to the maze_size
 	lw $t1 , 0($t0) # load the maze width to $t1 
 	lw $t2 , 4($t0) # load the maze height to $t2
@@ -1227,6 +1226,8 @@ hit_border:
 	li $v0 , 0 # set return value to 0 when hit the border
 	
 	hit_exit:
+
+#*** Your code ends here
 	
 	jr $ra
 #--------------------------------------------------------------------
@@ -1274,6 +1275,8 @@ mpu_check_path1:
 
 mpu_check_path2:
 		# check whether player's top-left corner is in a wall 
+		# Many student ask about why $a0=$s0+16 not $a0=$s0+32
+		# Since the tank coordinates are always multiple of 16, add 16 is to check whther the right half of the player collides with 16-wide any object.
 		addi $a0, $s0, 16
 		addi $a1, $s1, 0
 		jal get_bitmap_cell
@@ -1331,12 +1334,12 @@ move_player_down:
 		addi $t2, $t2, -1 # y-coordinate of lower-border is (height - 1)
 		add $t9, $s1, $s4
 		slt $t4, $t2, $t9
-		beq $t4, $zero, mbd_check_path1 
+		beq $t4, $zero, mpd_check_path1 
 		# li $s1, 0
 		# j mbd_save_yloc
-		j mbd_no_move
+		j mpd_no_move
 
-mbd_check_path1:	
+mpd_check_path1:	
 		# check whether player's bottom-left corner is in a wall
 		add $s1, $s1, $t3 # new y_loc
 		addi $a0, $s0, 0
@@ -1344,18 +1347,18 @@ mbd_check_path1:
 		addi $a1, $a1, -1 # y-coordinate of player's bottom corners	
 		jal get_bitmap_cell
 		# slt $v0, $zero, $v0 
-		bne $v0, $zero, mbd_no_move  
+		bne $v0, $zero, mpd_no_move  
 
-mbd_check_path2:	
+mpd_check_path2:	
 		# check whether player's bottom-left corner is in a wall
 		addi $a0, $s0, 16
 		add $a1, $s1, $s4
 		addi $a1, $a1, -1 # y-coordinate of player's bottom corners	
 		jal get_bitmap_cell
 		# slt $v0, $zero, $v0 
-		bne $v0, $zero, mbd_no_move  
+		bne $v0, $zero, mpd_no_move  
 
-mbd_save_yloc:	sw $s1, 4($s2) # save new y_loc
+mpd_save_yloc:	sw $s1, 4($s2) # save new y_loc
 		la $t0, player_id
 		lw $a0, 0($t0)
 		addi $a1, $s0, 0
@@ -1364,10 +1367,10 @@ mbd_save_yloc:	sw $s1, 4($s2) # save new y_loc
 		li $v0, 104
 		syscall # set new object location
 		li $v0, 1
-		j mbd_exit
+		j mpd_exit
 	
-mbd_no_move:	li $v0, 0				 
-mbd_exit:	lw $ra, 0($sp)
+mpd_no_move:	li $v0, 0				 
+mpd_exit:	lw $ra, 0($sp)
 		lw $s0, 4($sp)
 		lw $s1, 8($sp)
 		lw $s2, 12($sp)
@@ -1402,7 +1405,7 @@ move_player_left:
 # Lastly, pop and restore values in $ra, $s0, $s1, $s2, $s3, $s4  and return
 # Hint: you can refer to move_player_up and move_player_down to get some clues
 # *****Your codes start here
-	
+		
 		# push $ra & $s0-$s4 to the stack
 		addi $sp , $sp , -24
 		sw $ra , 0($sp)
@@ -1483,19 +1486,19 @@ move_player_left:
 #--------------------------------------------------------------------	
 move_player_right:
 
-# *****Task2: you need to complete this procedure move_bulletman_right to perform its operations as described in comments above. 
+# *****Task2: you need to complete this procedure move_player_right to perform its operations as described in comments above. 
 # Hints:
 # Firstly, preserve values $ra, $s0, $s1, $s2, $s3, $s4 with stack
 # Then, use the registers as described below:
-# 		The x_loc of the bulletman object is in $s0
-# 		The y_loc of the bulletman object is in $s1
-# 		The address of the bulletman obejct is in $s2
-# 		The height of the bulletman object is in $s3
-# 		The width of the bulletman object is in $s4 
-# Calculate new x_loc of the bulletman object.
-# Check whether bulletman's top-right or bottom-right corner is in a wall: 
-#		If it is in a wall, then the bulletman can't move
-# 		If it is not, then save and set the new x_loc for the bulletman object
+# 		The x_loc of the player object is in $s0
+# 		The y_loc of the player object is in $s1
+# 		The address of the player obejct is in $s2
+# 		The height of the player object is in $s3
+# 		The width of the player object is in $s4 
+# Calculate new x_loc of the player object.
+# Check whether player's top-right or bottom-right corner is in a wall: 
+#		If it is in a wall, then the player can't move
+# 		If it is not, then save and set the new x_loc for the player object
 # Set $v0=1 if a movement has been made, 0 otherwise
 # Lastly, pop and restore values in $ra, $s0, $s1, $s2, $s3, $s4  and return
 # Hint: you can refer to move_player_up and move_player_down to get some clues
