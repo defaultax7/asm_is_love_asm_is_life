@@ -2,6 +2,7 @@
    import mars.util.*;
    import mars.mips.hardware.*;
    import mars.*;
+   import mars.ext.my.GameMenu;
    import javax.swing.JOptionPane;
 
    public class Syscall120 extends AbstractSyscall {
@@ -18,7 +19,9 @@
    */
        public void simulate(ProgramStatement statement) throws ProcessingException {
          try{
-            JOptionPane.showMessageDialog(null, "alert", "alert", JOptionPane.ERROR_MESSAGE); 
+//            JOptionPane.showMessageDialog(null, "alert", "alert", JOptionPane.ERROR_MESSAGE);
+            GameMenu gameMenu = new GameMenu();
+            gameMenu.init();
 		 }catch(Exception e){
 			 throw e;
 		 }
