@@ -2,7 +2,7 @@
 # game setting
 start_time : .word 0 # For saving the start time in unit time stamp ( only save the low 32bit as it is big enough)
 timer_mes :  .asciiz "0" # Base address for calling syscall 105 to show the timer
-timer_loc : .word 450 400 # location of the timer
+timer_loc : .word 420 400 # location of the timer
 
 
 enemy_num: 		.word 	0	# the number of enemys
@@ -161,13 +161,8 @@ game_enemy_shoot:
 
 update_timer:
 	
-	###
-	# print new line
-	la $t0 , new_line
-	la $a0 , ($t0)
-	li $v0 , 4
-	syscall
 	
+	# get the unit timestamp
 	li $v0 , 30
 	syscall
 	
@@ -179,18 +174,21 @@ update_timer:
 	div $a0 , $t1 # divide the time lapse by 1000
 	mflo $a0 # move the quotient to $a0
 	
-	li $v0 , 1 # show the time lapse in I/O console
-	syscall
+	# only support 0-99 second
 	
-	###
-
-	
-	
-	
+	li $t1 , 10 # used to get the first digit of the timer
+	div $a0 , $t1 # divide the time lapse (sec) by 10
+	mflo $a1 # move the first digit of the timer to $a1
+	mfhi $a0 # move the second digit of the timer to $a0
 	
 	la $t0 , timer_mes
-	addi $a0 , $a0 , 48 # ascii base
+	
+	addi $a0 , $a0 , 48 # ascii 0 = 48
+	sll $a0 , $a0 , 8 # shift 8 bits (ascii take 8 bits per char) & little endian, so start with last digit
+	addi $a1 , $a1 , 48 # ascii 0 = 48
+	
 	add $t0 , $a0 , $zero
+	add $t0 , $a1 , $t0
 	sw $t0 , timer_mes
 	
 	li $v0, 105
@@ -200,7 +198,6 @@ update_timer:
 	lw $a2,4($t0)
 	la $a3,timer_mes
 	syscall
-	###
 	
 	###
 
