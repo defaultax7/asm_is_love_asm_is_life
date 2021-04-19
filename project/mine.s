@@ -1,6 +1,9 @@
 .data
 # game setting
 start_time : .word 0 # For saving the start time in unit time stamp ( only save the low 32bit as it is big enough)
+timer_mes :  .asciiz "0" # Base address for calling syscall 105 to show the timer
+timer_loc : .word 450 400 # location of the timer
+
 
 enemy_num: 		.word 	0	# the number of enemys
 enemy_alive_num: 		.word 	0	# the number of alive enemys
@@ -100,6 +103,9 @@ maze_bitmap: .byte
 .text
 
 main:	
+
+	
+
 	jal input_game_params
 	la $t0, enemy_num
 	sw $v0, 0($t0)
@@ -111,6 +117,8 @@ main:
 	li $a0, 0
 	li $a1, 0
 	li $v0, 102
+	
+	
 	
 	# Initialize the game
 	jal init_game
@@ -171,11 +179,30 @@ update_timer:
 	div $a0 , $t1 # divide the time lapse by 1000
 	mflo $a0 # move the quotient to $a0
 	
-	li $v0 , 1
+	li $v0 , 1 # show the time lapse in I/O console
 	syscall
+	
 	###
 
 	
+	
+	
+	
+	la $t0 , timer_mes
+	addi $a0 , $a0 , 48 # ascii base
+	add $t0 , $a0 , $zero
+	sw $t0 , timer_mes
+	
+	li $v0, 105
+	li $a0,10
+	la $t0,timer_loc
+	lw $a1,0($t0)
+	lw $a2,4($t0)
+	la $a3,timer_mes
+	syscall
+	###
+	
+	###
 
 game_refresh: # refresh screen
 	li $v0, 101
