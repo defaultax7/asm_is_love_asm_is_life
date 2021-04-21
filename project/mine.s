@@ -4,6 +4,10 @@ start_time : .word 0 # For saving the start time in unit time stamp ( only save 
 timer_mes :  .asciiz "0" # Base address for calling syscall 105 to show the timer
 timer_loc : .word 420 400 # location of the timer
 
+score : .word 0 # score
+score_mes : .asciiz "0000" # Base address for calling syscall 105 to show the score
+score_loc : .word 400 20 # location of the score
+
 
 enemy_num: 		.word 	0	# the number of enemys
 enemy_alive_num: 		.word 	0	# the number of alive enemys
@@ -200,6 +204,15 @@ update_timer:
 	syscall
 	
 	###
+	
+update_score:
+	li $v0, 105
+	li $a0,11
+	la $t0,score_loc
+	lw $a1,0($t0)
+	lw $a2,4($t0)
+	la $a3,score_mes
+	syscall
 
 game_refresh: # refresh screen
 	li $v0, 101
