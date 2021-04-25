@@ -118,10 +118,13 @@ main:
 	li $v0, 100 # create the screen
 	syscall
 	
-	li $a0, 0
+	###  play bgm
+	li $a0, 7
 	li $a1, 0
 	li $v0, 102
-	
+	syscall
+	###
+
 	
 	
 	# Initialize the game
