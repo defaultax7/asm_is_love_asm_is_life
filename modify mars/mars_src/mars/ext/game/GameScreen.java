@@ -3,6 +3,7 @@ package mars.ext.game;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.image.*;
 import java.io.*;
 import java.util.*;
@@ -182,6 +183,8 @@ public class GameScreen extends JFrame {
         this.soundPlayer.stopSound(soundId);
     }
 
+    public void stopAllSound() {soundPlayer.stopAll();}
+
 
     public void addGameObject(int id, GameObject obj, int type) {
         this.gameObjs.get(type).put(id, obj);
@@ -349,5 +352,6 @@ public class GameScreen extends JFrame {
             routeFile = GameConfigFile.properties.getProperty("routeFile" + routeIndex);
         }
     }
+
 
 }

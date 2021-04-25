@@ -120,7 +120,7 @@ main:
 	
 	###  play bgm
 	li $a0, 7
-	li $a1, 0
+	li $a1, 1
 	li $v0, 102
 	syscall
 	###

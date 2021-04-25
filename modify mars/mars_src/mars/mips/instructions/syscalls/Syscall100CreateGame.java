@@ -2,9 +2,13 @@
 /*    */ 
 /*    */ import mars.ProcessingException;
 /*    */ import mars.ProgramStatement;
-/*    */ import mars.ext.game.GameScreen;
+/*    */ import mars.ext.game.GameConfigFile;
+import mars.ext.game.GameScreen;
 /*    */ import mars.util.SystemIO;
-/*    */ 
+
+import java.awt.event.WindowEvent;
+
+/*    */
 /*    */ 
 /*    */ public class Syscall100CreateGame
 /*    */   extends AbstractSyscall
@@ -17,7 +21,16 @@
 /*    */   
 /*    */   public void simulate(ProgramStatement paramProgramStatement) throws ProcessingException {
 /*    */     try {
-/* 20 */       GameScreen.createIntance("/game/properties.txt");
+ /* 20 */     GameScreen gs=  GameScreen.createIntance("/game/properties.txt");
+ gs.addWindowListener(new java.awt.event.WindowAdapter(){
+     @Override
+     public void windowClosing(WindowEvent e) {
+         super.windowClosing(e);
+         System.out.println("i am shit");
+         gs.stopAllSound();
+//         gs.stopSound(7);
+     }
+ });
 /*    */     }
 /* 22 */     catch (Exception exception) {
 /* 24 */       SystemIO.printString("In Creating Game, internal error has happened. Try restarting the MARS!");
