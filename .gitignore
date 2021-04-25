@@ -1,5 +1,3 @@
 
 *.jar
 *.class
-modify mars/my mars/mars/mips/instructions/syscalls/Syscall120.class
-modify mars/my mars/NewMars_source.jar

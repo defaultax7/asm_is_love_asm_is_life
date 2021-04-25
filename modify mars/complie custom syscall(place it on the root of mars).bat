@@ -1,1 +1,0 @@
-javac mars\mips\instructions\syscalls\*.java
