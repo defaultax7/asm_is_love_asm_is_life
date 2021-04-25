@@ -165,6 +165,17 @@ game_enemy_shoot:
 	beq $t1, $t2,update_timer
 	li $a0, 1
 	jal enemy_shoot
+	
+	###
+	
+update_score:
+	li $v0, 105
+	li $a0,11
+	la $t0,score_loc
+	lw $a1,0($t0)
+	lw $a2,4($t0)
+	la $a3,score_mes
+	syscall
 
 update_timer:
 	
@@ -180,6 +191,7 @@ update_timer:
 	li $t1 , 1000 # used to change ms to s
 	div $a0 , $t1 # divide the time lapse by 1000
 	mflo $a0 # move the quotient to $a0
+	la $t7 , ($a0) # back up the time lapse (sec) to $t7
 	
 	# only support 0-99 second
 	
@@ -206,16 +218,18 @@ update_timer:
 	la $a3,timer_mes
 	syscall
 	
-	###
+	# if it is over 60 sec, it is a game over
+	li $t6 , 60
+	beq $t7 , $t6 , time_up
+	j game_refresh
+time_up:
+	la $t0, game_over
+	li $t1,1
+	sw $t1,0($t0)
+	j process_game_over
 	
-update_score:
-	li $v0, 105
-	li $a0,11
-	la $t0,score_loc
-	lw $a1,0($t0)
-	lw $a2,4($t0)
-	la $a3,score_mes
-	syscall
+	
+	###
 
 game_refresh: # refresh screen
 	li $v0, 101

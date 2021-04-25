@@ -26,7 +26,6 @@ import java.awt.event.WindowEvent;
      @Override
      public void windowClosing(WindowEvent e) {
          super.windowClosing(e);
-         System.out.println("i am shit");
          gs.stopAllSound();
 //         gs.stopSound(7);
      }
