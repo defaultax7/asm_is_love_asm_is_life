@@ -88,6 +88,7 @@ public class GameScreen extends JFrame {
                 for (int i = 0; i < gameObjs.size(); i++)
                     gameObjs.get(i).clear();
                 instance = null;
+                stopAllSound();
             }
         });
 

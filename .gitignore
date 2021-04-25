@@ -1,3 +1,4 @@
 
 *.jar
 *.class
+modify_mars/mars_src/out/*

@@ -22,14 +22,7 @@ import java.awt.event.WindowEvent;
 /*    */   public void simulate(ProgramStatement paramProgramStatement) throws ProcessingException {
 /*    */     try {
  /* 20 */     GameScreen gs=  GameScreen.createIntance("/game/properties.txt");
- gs.addWindowListener(new java.awt.event.WindowAdapter(){
-     @Override
-     public void windowClosing(WindowEvent e) {
-         super.windowClosing(e);
-         gs.stopAllSound();
-//         gs.stopSound(7);
-     }
- });
+
 /*    */     }
 /* 22 */     catch (Exception exception) {
 /* 24 */       SystemIO.printString("In Creating Game, internal error has happened. Try restarting the MARS!");

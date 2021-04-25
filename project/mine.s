@@ -162,7 +162,7 @@ game_enemy_shoot:
 	la $t0, enemy_num
 	lw $t1, 0($t0)
 	li $t2,1
-	beq $t1, $t2,update_timer
+	beq $t1, $t2,update_score
 	li $a0, 1
 	jal enemy_shoot
 	
@@ -350,6 +350,8 @@ ig_start:
 	sw $a1, 0($t0)
 	sw $a2, 4($t0)
 	syscall
+	
+
 
 	# create bullets
 	li $v0, 103
