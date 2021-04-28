@@ -592,7 +592,7 @@ new_bullet:
 
 nb_up_bullet:
 	sub $s1,$s1, $s3
-	sub $s1,$s1, $s3  # ??? why
+	sub $s2,$s2, $s3  
 	sub $s2, $s2, $s3
 	subi $s2, $s2, 16
 	la $t0, bullet_locs
