@@ -9,6 +9,7 @@ import java.applet.AudioClip;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 
 public class MenuScreen extends JFrame {
     private int height = 446;
@@ -58,19 +59,24 @@ public class MenuScreen extends JFrame {
                 cursorIndex += maxindex;
             }
             paintComponent(getGraphics());
-            System.out.println(cursorIndex);
+            playSoundEffect();
         }
 
         public void cursorDown() {
             cursorIndex = (cursorIndex + 1) % maxindex;
             paintComponent(getGraphics());
-            System.out.println(cursorIndex);
+            playSoundEffect();
+        }
+
+        private void playSoundEffect(){
+            AudioClip clip = Applet.newAudioClip(getClass().getResource("/game/sounds/cursor.wav"));
+            clip.play();
         }
 
 
         @Override
         protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
+//            super.paintComponent(g);
 //            draw the background
             g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
 
