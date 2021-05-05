@@ -108,6 +108,22 @@ maze_bitmap: .byte
 
 main:	
 
+	# show menu screen
+	li $v0 , 120
+	syscall
+	
+menu_loop:
+	jal get_keyboard_input
+
+
+	jal process_menu_cursor
+
+	
+	li $a0, 30 # wait for 30ms 
+	jal have_a_nap
+	
+	j menu_loop
+	
 	
 
 	jal input_game_params
@@ -129,6 +145,8 @@ main:
 	
 	# Initialize the game
 	jal init_game
+	
+
 
 game_loop:	
 	jal get_keyboard_input
@@ -140,6 +158,7 @@ game_loop:
 	la $t0,enemy_alive_num
 	lw $t1,0($t0)
 	beq $t1,$zero, process_game_win
+	
 
 game_tank_shoot:
 	jal process_tank_shoot
@@ -1720,3 +1739,29 @@ get_bitmap_cell:
 	
 gbc_exit: 
 	jr $ra  
+	
+	
+	
+process_menu_cursor:
+	la $t0 , input_key
+	lw $a0 , ($t0)
+
+	li $t0 , 119 # w key
+	li $t1 , 115 # s key
+
+	beq $a0 , $t0 , cursor_up
+	beq $a0 , $t1 , cursor_down
+	j menu_exit
+cursor_up:	
+	li $v0 , 121
+	li $a0 , 0
+	syscall
+	j menu_exit
+cursor_down:
+	li $v0 , 121
+	li $a0 , 1
+	syscall
+	
+menu_exit:
+	jr $ra
+	syscall
