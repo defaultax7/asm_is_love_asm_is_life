@@ -812,10 +812,10 @@ cbc_top_right:
 	
 cbc_top_right_grid:
 
-	# $a0 point to the right
+	# $a0 point to the right edge of the bullet
 	add $a0 , $s1 , $s3 
 	add $a0 , $a0 , $s3
-	#addi $a0 , $a0 , -1 # -1 as after adding the full size of the bullet, the location is point to the next grid instead of right most end of the bullet
+	addi $a0 , $a0 , -1 # -1 as after adding the full size of the bullet, the location is point to the next grid instead of right most end of the bullet
 	
 	# $a1 point to the top
 	add $a1 , $s2 , 0	
