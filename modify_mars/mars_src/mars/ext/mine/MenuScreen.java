@@ -9,7 +9,6 @@ import java.applet.AudioClip;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 
 public class MenuScreen extends JFrame {
     private int height = 446;
@@ -17,6 +16,7 @@ public class MenuScreen extends JFrame {
     private String title = "Battle city(menu)";
     private MMIOInput keyListener;
     private Bg panel;
+    private AudioClip introMusic;
 
     private static MenuScreen instance = null;
 
@@ -53,22 +53,33 @@ public class MenuScreen extends JFrame {
             this.cursorImg = cursorImg;
         }
 
-        public void cursorUp() {
-            cursorIndex = (cursorIndex - 1);
-            if(cursorIndex < 0){
-                cursorIndex += maxindex;
-            }
+//        public void cursorUp() {
+//            cursorIndex = (cursorIndex - 1);
+//            if (cursorIndex < 0) {
+//                cursorIndex += maxindex;
+//            }
+//            paintComponent(getGraphics());
+//            playSoundEffect();
+//        }
+//
+//        public void cursorDown() {
+//            cursorIndex = (cursorIndex + 1) % maxindex;
+//            paintComponent(getGraphics());
+//            playSoundEffect();
+//        }
+
+        public void moveCursor(int x, int y) {
+            cursorX = x;
+            cursorY = y;
             paintComponent(getGraphics());
             playSoundEffect();
         }
 
-        public void cursorDown() {
-            cursorIndex = (cursorIndex + 1) % maxindex;
-            paintComponent(getGraphics());
-            playSoundEffect();
+        public void changeAction(int action) {
+            cursorIndex = action;
         }
 
-        private void playSoundEffect(){
+        private void playSoundEffect() {
             AudioClip clip = Applet.newAudioClip(getClass().getResource("/game/sounds/cursor.wav"));
             clip.play();
         }
@@ -81,7 +92,7 @@ public class MenuScreen extends JFrame {
             g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
 
 //            draw the cursor
-            g.drawImage(cursorImg, cursorX , cursorY + cursorIndex * gapY, null);
+            g.drawImage(cursorImg, cursorX, cursorY , null);
         }
     }
 
@@ -91,17 +102,18 @@ public class MenuScreen extends JFrame {
     }
 
     private void playIntroMusic() {
-        AudioClip clip = Applet.newAudioClip(getClass().getResource("/game/sounds/start.wav"));
-        clip.play();
+        introMusic = Applet.newAudioClip(getClass().getResource("/game/sounds/start.wav"));
+        introMusic.play();
     }
 
+    public void terminate(){
+        introMusic.stop();
+        dispose();
+    }
 
-    public void move(int action) {
-        if (action == 0) {
-            panel.cursorUp();
-        } else if (action == 1) {
-            panel.cursorDown();
-        }
+    public void move(int a0, int a1, int action) {
+        panel.moveCursor(a0, a1);
+        panel.changeAction(action);
     }
 
     public void init() {

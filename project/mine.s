@@ -12,6 +12,7 @@ cursor_index : .word 0 # index of menu cursor
 cursor_max_index : .word 3 # number of options in menu
 cursor_loc : .word 115 237 # location of the cursor
 cursor_gapY: .word 42 # gap in y axis for every option
+started : .word 0 # boolean : check for if the game is started 
 
 enemy_num: 		.word 	0	# the number of enemys
 enemy_alive_num: 		.word 	0	# the number of alive enemys
@@ -119,16 +120,23 @@ main:
 menu_loop:
 	jal get_keyboard_input
 
-
 	jal process_menu_cursor
-
 	
 	li $a0, 30 # wait for 30ms 
 	jal have_a_nap
 	
+	# break the menu loop if "start" was choosen
+	la $t0 , started
+	lw $t0 , ($t0)
+	bne $t0 , $zero , started_game 
+	
 	j menu_loop
+	
+started_game:
 
-	jal input_game_params
+#	jal input_game_params
+#	current design , start with 2 enemies with no other choice
+	li $v0 , 2
 	la $t0, enemy_num
 	sw $v0, 0($t0)
 	la $t0, enemy_alive_num
@@ -1762,8 +1770,21 @@ menu_enter:
 	la $t5 , cursor_index
 	lw $a2 , ($t5) # get the previous action index
 	li $t0 , 2
-	beq $a2 , 2 , exit_the_programm # check if selected option is exit (2)
+	beq $a2 , $t0 , exit_the_programm # check if selected option is exit (2)
+	li $t0 , 0
+	beq $a2 , $t0 , start_the_game # check if selected option is start (0)
 	j menu_exit
+	
+start_the_game:
+	# close the menu
+	li $v0 , 122
+	syscall
+	
+	# set started to 1 
+	la $t0 , started
+	li $t1 , 1
+	sw $t1 , ($t0)
+	j menu_exit		
 	
 exit_the_programm:
 	# close the menu
