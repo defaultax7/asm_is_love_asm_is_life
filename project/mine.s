@@ -9,7 +9,7 @@ score_mes : .asciiz "0000" # Base address for calling syscall 105 to show the sc
 score_loc : .word 430 20 # location of the score
 
 cursor_index : .word 0 # index of menu cursor
-cursor_max_index : .word 3 # number of options in menu
+cursor_max_index : .word 4 # number of options in menu
 cursor_loc : .word 115 237 # location of the cursor
 cursor_gapY: .word 42 # gap in y axis for every option
 started : .word 0 # boolean : check for if the game is started 
@@ -169,6 +169,8 @@ game_loop:
 	lw $t1,0($t0)
 	beq $t1,$zero, process_game_win
 	
+pause_screen:
+	jal process_pause_screen
 
 game_tank_shoot:
 	jal process_tank_shoot
@@ -1769,8 +1771,8 @@ process_menu_cursor:
 menu_enter:
 	la $t5 , cursor_index
 	lw $a2 , ($t5) # get the previous action index
-	li $t0 , 2
-	beq $a2 , $t0 , exit_the_programm # check if selected option is exit (2)
+	li $t0 , 3
+	beq $a2 , $t0 , exit_the_programm # check if selected option is exit (3)
 	li $t0 , 0
 	beq $a2 , $t0 , start_the_game # check if selected option is start (0)
 	j menu_exit
@@ -1856,3 +1858,18 @@ update_cursor:
 menu_exit:
 	jr $ra
 	syscall
+
+process_pause_screen:
+	
+	la $t0 , input_key
+	lw $t0 , ($t0)
+	
+	# if input is escape
+	li $t1 , 27
+	bne $t0 , $t1 , pause_screen_exit
+	
+	
+	
+pause_screen_exit:
+	
+	jr $ra
