@@ -7,7 +7,10 @@
 /*    */ import mars.ext.game.GameTextObject;
 /*    */ import mars.mips.hardware.RegisterFile;
 /*    */ import mars.util.SystemIO;
-/*    */ 
+
+import java.awt.*;
+
+/*    */
 /*    */ 
 /*    */ 
 /*    */ public class Syscall105CreateGameText
@@ -27,7 +30,8 @@
 /* 27 */     String str = SyscallGameHelper.getStringFromMIPS(RegisterFile.getValue(7));
 /* 28 */     GameTextObject gameTextObject = new GameTextObject(i, j, k);
 /*    */     try {
-/* 30 */       gameTextObject.setColor(13433072); //65280
+///* 30 */       gameTextObject.setColor(13433072); //65280
+        gameTextObject.setColor(Color.WHITE.getRGB());
 /* 31 */     } catch (Exception exception) {}
 /*    */     
 /* 33 */     gameTextObject.setText(str);

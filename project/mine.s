@@ -2,12 +2,16 @@
 # game setting
 start_time : .word 0 # For saving the start time in unit time stamp ( only save the low 32bit as it is big enough)
 timer_mes :  .asciiz "0" # Base address for calling syscall 105 to show the timer
-timer_loc : .word 420 400 # location of the timer
+timer_loc : .word 450 400 # location of the timer
 
 score : .word 0 # score
 score_mes : .asciiz "0000" # Base address for calling syscall 105 to show the score
-score_loc : .word 400 20 # location of the score
+score_loc : .word 430 20 # location of the score
 
+cursor_index : .word 0 # index of menu cursor
+cursor_max_index : .word 3 # number of options in menu
+cursor_loc : .word 115 237 # location of the cursor
+cursor_gapY: .word 42 # gap in y axis for every option
 
 enemy_num: 		.word 	0	# the number of enemys
 enemy_alive_num: 		.word 	0	# the number of alive enemys
@@ -123,8 +127,6 @@ menu_loop:
 	jal have_a_nap
 	
 	j menu_loop
-	
-	
 
 	jal input_game_params
 	la $t0, enemy_num
@@ -138,7 +140,7 @@ menu_loop:
 	li $a0, 7
 	li $a1, 1
 	li $v0, 102
-	syscall
+	#syscall
 	###
 
 	
@@ -1749,18 +1751,68 @@ process_menu_cursor:
 	li $t0 , 119 # w key
 	li $t1 , 115 # s key
 
+	# load the param for moving cursor when input is w/s 
 	beq $a0 , $t0 , cursor_up
 	beq $a0 , $t1 , cursor_down
 	j menu_exit
-cursor_up:	
+cursor_up:
+
+
+	la $t0 , cursor_loc
+	lw $a0 , 0($t0) # a0 : x location
+	lw $a1 , 4($t0) # a1 : y location
+	la $t5 , cursor_index
+	lw $a2 , ($t5) # get the previous action index
+	addi $a2 , $a2 , -1 # update action index ( move up = -1)
+	slt $t1 , $a2 , $zero # check if index become negative
+	
+
+	
+	beq $t1 , $zero , update_cursor # if it is not negative, go to update directly
+	# load the max index
+	la $t0 , cursor_max_index
+	lw $t0 , ($t0)
+	
+	add $a2 , $a2 , $t0 # add the max index to make it as circular
+	
+	j update_cursor
+	
+
+cursor_down:
+
+	la $t0 , cursor_loc
+	lw $a0 , 0($t0) # a0 : x location
+	lw $a1 , 4($t0) # a1 : y location
+	la $t5 , cursor_index
+	lw $a2 , ($t5) # get the previous action index
+	addi $a2 , $a2 , 1 # update action index ( move down = +1)
+	
+	# load the max index
+	la $t0 , cursor_max_index
+	lw $t0 , ($t0)
+	
+	# mod by max index (%=3)
+	div $a2 , $t0
+	mfhi $a2 # get the remainder 
+	
+	
+update_cursor:
+
+	# update cursor index 
+	sw $a2 , ($t5)
+	
+	# calculate the new y location
+	la $t0 , cursor_gapY
+	lw $t0 , ($t0)
+	mult $t0 , $a2
+	mflo $t1
+	
+	# update the new y location
+	add $a1 , $a1 , $t1
+	
 	li $v0 , 121
-	li $a0 , 0
 	syscall
 	j menu_exit
-cursor_down:
-	li $v0 , 121
-	li $a0 , 1
-	syscall
 	
 menu_exit:
 	jr $ra

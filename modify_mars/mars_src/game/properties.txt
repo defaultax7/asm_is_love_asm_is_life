@@ -1,5 +1,5 @@
 title = BattleCity Game
-width = 512
+width = 536
 height = 448
 mazeWidth = 416
 mazeHeight = 416

@@ -19,7 +19,7 @@ public class GameTextObject extends GameObject {
     public GameTextObject(int id, int x, int y) {
         super(id, x, y);
         text = "";
-        font = new Font(Font.SANS_SERIF, Font.BOLD, 28);
+        font = new Font(Font.DIALOG, Font.BOLD, 28);
         color = Color.red;
     }
 

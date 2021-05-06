@@ -12,12 +12,21 @@ public class Syscall121 extends AbstractSyscall {
 
     @Override
     public void simulate(ProgramStatement paramProgramStatement) throws ProcessingException {
-//        get $a0
-        int i = RegisterFile.getValue(4);
+
+        int a0 = RegisterFile.getValue(4); // x location
+        int a1 = RegisterFile.getValue(5); // y location
+        int a2 = RegisterFile.getValue(6); // action index
+
+        System.out.println(a0);
+        System.out.println(a1);
+        System.out.println(a2);
+        System.out.println();
 
         MenuScreen menu = MenuScreen.getInstance();
 
-        menu.move(i);
+        menu.move(a0,a1,a2);
+//        menu.move(100,100,a2);
 
     }
 }
+
