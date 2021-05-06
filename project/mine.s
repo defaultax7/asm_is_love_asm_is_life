@@ -17,6 +17,13 @@ started : .word 0 # boolean : check for if the game is started
 timer_for_wait_screen : .word 0 # reference point for wait screen time 
 finish_waiting : .word 0 # boolean : check for if the waiting is finished
 
+# the file name of score file
+score_file : .asciiz "score.txt" 
+# message box 
+create_score_file_mes : .asciiz "No score file is found! A new one is created"
+
+buffer : .space 100 # buffer for file reading 
+
 ### my argument
 
 enemy_num: 		.word 	0	# the number of enemys
@@ -1809,6 +1816,53 @@ check_score:
 	li $v0 , 124
 	syscall
 	
+	# open score file
+	li $v0 , 13
+	la $a0 , score_file
+	li $a1 , 0 # read only
+	syscall
+	
+	move $t0 , $v0
+	
+	# lazy way to get 0xFFFFFFFF
+	li $t1 , 0
+	addi $t1 , $t1 , -1
+	
+	# if $t0 is 0xFFFFFFFF , that means the score file can not be found/openned
+	bne $t0 , $t1 , score_file_found
+	
+	# tell the user, a new score file will be created
+	li $v0 , 55
+	la $a0 , create_score_file_mes
+	li $a1 , 1
+	syscall
+	
+	# create a score file if not exist
+	li $v0 , 125
+	la $a0 , score_file
+	syscall
+	
+	j score_screen_loop
+	
+score_file_found:
+
+	# read the file (first 100 characters)
+	li $v0 , 14
+	la $a1 , buffer
+	li $a2 , 100
+	move $a0 , $t0
+	syscall
+	
+	# !!! printing test
+	la $a0 , buffer
+	li $v0 , 4
+	syscall
+	#
+	
+	# close the file
+	li $v0 , 16
+	move $a0 , $t0
+	syscall		
 	
 score_screen_loop:
 	# keep showing the score screen until pressing escape 
