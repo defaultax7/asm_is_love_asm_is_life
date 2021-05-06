@@ -17,15 +17,9 @@ public class Syscall121 extends AbstractSyscall {
         int a1 = RegisterFile.getValue(5); // y location
         int a2 = RegisterFile.getValue(6); // action index
 
-        System.out.println(a0);
-        System.out.println(a1);
-        System.out.println(a2);
-        System.out.println();
-
         MenuScreen menu = MenuScreen.getInstance();
 
         menu.move(a0,a1,a2);
-//        menu.move(100,100,a2);
 
     }
 }

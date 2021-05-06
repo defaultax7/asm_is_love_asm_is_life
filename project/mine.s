@@ -1742,7 +1742,7 @@ get_bitmap_cell:
 gbc_exit: 
 	jr $ra  
 	
-	
+### my extra code	
 	
 process_menu_cursor:
 	la $t0 , input_key
@@ -1750,13 +1750,31 @@ process_menu_cursor:
 
 	li $t0 , 119 # w key
 	li $t1 , 115 # s key
+	li $t2 , 32 # space key
 
 	# load the param for moving cursor when input is w/s 
 	beq $a0 , $t0 , cursor_up
 	beq $a0 , $t1 , cursor_down
+	beq $a0 , $t2 , menu_enter
 	j menu_exit
-cursor_up:
+	
+menu_enter:
+	la $t5 , cursor_index
+	lw $a2 , ($t5) # get the previous action index
+	li $t0 , 2
+	beq $a2 , 2 , exit_the_programm # check if selected option is exit (2)
+	j menu_exit
+	
+exit_the_programm:
+	# close the menu
+	li $v0 , 122
+	syscall
 
+	# terminate the program 
+	li $v0 , 10
+	syscall
+	
+cursor_up:
 
 	la $t0 , cursor_loc
 	lw $a0 , 0($t0) # a0 : x location
