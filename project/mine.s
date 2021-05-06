@@ -1,11 +1,11 @@
 .data
 # game setting
-start_time : .word 0 # For saving the start time in unit time stamp ( only save the low 32bit as it is big enough)
-timer_mes :  .asciiz "0" # Base address for calling syscall 105 to show the timer
+start_time : .word 0 # for saving the start time in unit time stamp ( only save the low 32bit as it is big enough)
+timer_mes :  .asciiz "0" # base address for calling syscall 105 to show the timer
 timer_loc : .word 450 400 # location of the timer
 
 score : .word 0 # score
-score_mes : .asciiz "0000" # Base address for calling syscall 105 to show the score
+score_mes : .asciiz "0000" # base address for calling syscall 105 to show the score
 score_loc : .word 430 20 # location of the score
 
 cursor_index : .word 0 # index of menu cursor
@@ -13,6 +13,11 @@ cursor_max_index : .word 4 # number of options in menu
 cursor_loc : .word 115 237 # location of the cursor
 cursor_gapY: .word 42 # gap in y axis for every option
 started : .word 0 # boolean : check for if the game is started 
+
+timer_for_wait_screen : .word 0 # reference point for wait screen time 
+finish_waiting : .word 0 # boolean : check for if the waiting is finished
+
+### my argument
 
 enemy_num: 		.word 	0	# the number of enemys
 enemy_alive_num: 		.word 	0	# the number of alive enemys
@@ -155,7 +160,24 @@ started_game:
 	
 	# Initialize the game
 	jal init_game
+
+	# save the reference time for counting 1 seconds
+	la $t0 , timer_for_wait_screen
+	li $v0 , 30
+	syscall
+	sw $a0 , 0($t0) # save the low 32 bits to first word of reference time
 	
+show_stage1_screen:	
+	
+	jal process_stage_waiting_time
+	
+	la $t0 , finish_waiting
+	lw $t0 , ($t0)
+	bne $t0 , $zero , game_loop # start the game when 1 seconds has passed
+	
+	li $a0, 30 # wait for 30ms 
+	jal have_a_nap
+	j show_stage1_screen
 
 
 game_loop:	
@@ -364,12 +386,6 @@ init_game:
 
 ig_start:
 
-	# save the start time
-	la $t0 , start_time
-	li $v0 , 30
-	syscall
-	sw $a0 , 0($t0) # save the low 32 bits to first word of start time
-
 	# create the player object
 	li $v0, 103
 	la $t0, player_id
@@ -448,6 +464,7 @@ have_a_nap:
 # otherwise save the value 0 in input_key.
 #--------------------------------------------------------------------
 get_keyboard_input:
+	
 	add $t2, $zero, $zero
 	lui $t0, 0xFFFF
 	lw $t1, 0($t0)
@@ -458,6 +475,8 @@ get_keyboard_input:
 gki_exit:	
 	la $t0, input_key 
 	sw $t2, 0($t0) # save input key
+	
+
 	jr $ra
 
 #--------------------------------------------------------------------
@@ -1752,9 +1771,15 @@ get_bitmap_cell:
 gbc_exit: 
 	jr $ra  
 	
-### my extra code	
+### my extra code
+
+### menu section		
 	
 process_menu_cursor:
+	# have inside jal, so push the stack
+	addi $sp , $sp , -4
+	sw $ra , ($sp)
+
 	la $t0 , input_key
 	lw $a0 , ($t0)
 
@@ -1773,9 +1798,38 @@ menu_enter:
 	lw $a2 , ($t5) # get the previous action index
 	li $t0 , 3
 	beq $a2 , $t0 , exit_the_programm # check if selected option is exit (3)
+	li $t0 , 1
+	beq $a2 , $t0 , check_score # check if selected option is score checking (1)
 	li $t0 , 0
 	beq $a2 , $t0 , start_the_game # check if selected option is start (0)
 	j menu_exit
+	
+check_score:
+	# open the score screen
+	li $v0 , 124
+	syscall
+	
+	
+score_screen_loop:
+	# keep showing the score screen until pressing escape 
+	jal get_keyboard_input
+	
+	la $t0 , input_key
+	lw $t0 , ($t0)
+	li $t1 , 27 # ascii : escape
+	beq $t0 , $t1 , score_screen_loop_exit
+	
+	li $a0, 30 # wait for 30ms 
+	jal have_a_nap
+		
+	j score_screen_loop
+	
+score_screen_loop_exit:
+	# close the score screen
+	li $v0 , 124
+	syscall
+	
+	j menu_exit	
 	
 start_the_game:
 	# close the menu
@@ -1856,9 +1910,14 @@ update_cursor:
 	j menu_exit
 	
 menu_exit:
+	# pop back from stack
+	lw $ra , ($sp)
+	addi $sp , $sp , 4
+
 	jr $ra
 	syscall
 
+### in game section
 process_pause_screen:
 	
 	la $t0 , input_key
@@ -1866,10 +1925,43 @@ process_pause_screen:
 	
 	# if input is escape
 	li $t1 , 27
-	bne $t0 , $t1 , pause_screen_exit
-	
-	
+	bne $t0 , $t1 , pause_screen_exit	
 	
 pause_screen_exit:
 	
 	jr $ra
+	
+	
+process_stage_waiting_time:
+	# get the unit timestamp
+	li $v0 , 30
+	syscall
+	
+	la $t0 , timer_for_wait_screen
+	lw $t0 , ($t0)
+	sub $a0 , $a0 , $t0 # calculate the time lapse from reference time
+	li $t1 , 1000
+	slt $t0 , $a0 , $t1 # check if the time lapse is < 1 seconds
+	beq $t0 , $zero , set_finish_waiting
+	j stage_waiting_time_exit
+	
+set_finish_waiting:
+	# set finish waiting to 1
+	la $t0 , finish_waiting
+	li $t1 , 1
+	sw $t1 , ($t0)
+	
+	# close the waiting screen
+	li $v0 , 123
+	syscall
+	
+	# save the start time
+	la $t0 , start_time
+	li $v0 , 30
+	syscall
+	sw $a0 , 0($t0) # save the low 32 bits to first word of start time
+	
+stage_waiting_time_exit:		
+	
+	jr $ra
+	

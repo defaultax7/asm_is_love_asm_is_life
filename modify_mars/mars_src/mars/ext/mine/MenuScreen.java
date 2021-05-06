@@ -36,11 +36,13 @@ public class MenuScreen extends JFrame {
     private class Bg extends JPanel {
         private Image cursorImg;
         private Image image;
+        private Image scoreBgImg;
         private int cursorIndex = 0;
         private int cursorX = 115;
         private int cursorY = 237;
         private int gapY = 42;
         private int maxindex = 3;
+        private boolean checkingScore = false;
 
         public Bg(Image image) {
 //            setup background image (assume selection screen must have background)
@@ -51,6 +53,10 @@ public class MenuScreen extends JFrame {
         public void setCursorImg(Image cursorImg) {
 //            setup cursor image
             this.cursorImg = cursorImg;
+        }
+
+        public void setScoreBgImg(Image scoreBg){
+            this.scoreBgImg = scoreBg;
         }
 
 //        public void cursorUp() {
@@ -93,7 +99,17 @@ public class MenuScreen extends JFrame {
 
 //            draw the cursor
             g.drawImage(cursorImg, cursorX, cursorY , null);
+
+//            draw the score if the score option is choosen
+            if(checkingScore){
+                g.drawImage(scoreBgImg, 0, 0, getWidth(), getHeight(), this);
+            }
         }
+    }
+
+    public void toggleScoreScreen(){
+        panel.checkingScore = !panel.checkingScore;
+        paintComponents(getGraphics());
     }
 
     public MenuScreen() throws HeadlessException {
@@ -116,14 +132,18 @@ public class MenuScreen extends JFrame {
         panel.changeAction(action);
     }
 
+
     public void init() {
         File bgImg = new File("game/images/menu.jpg");
         File cursorImg = new File("game/images/cursor.png");
+        File scoreImg = new File("game/images/score.jpg");
         BufferedImage bg = null;
         BufferedImage cursor = null;
+        BufferedImage scoreBg = null;
         try {
             bg = ImageIO.read(bgImg);
             cursor = ImageIO.read(cursorImg);
+            scoreBg = ImageIO.read(scoreImg);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Can not load background image");
@@ -134,6 +154,7 @@ public class MenuScreen extends JFrame {
 
         panel = new Bg(bg);
         panel.setCursorImg(cursor);
+        panel.setScoreBgImg(scoreBg);
         add(panel);
 
         setVisible(true);

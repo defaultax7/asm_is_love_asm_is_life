@@ -8,6 +8,7 @@ import java.awt.image.*;
 import java.io.*;
 import java.util.*;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 /**
@@ -18,6 +19,8 @@ import javax.swing.*;
  */
 public class GameScreen extends JFrame {
     private BufferedImage offscreenImage;
+    private Image waitingScreen;
+    private boolean waiting = true;
     public int width; // the width of the screen
     public int height; // the height of the screen
     private String title; // the title of the screen
@@ -173,6 +176,10 @@ public class GameScreen extends JFrame {
         loadMaze(properties, 1);
         loadRouteFile();
         initGameScreen();
+
+//        stage 1 waiting screen
+        File waitingImg = new File("game/images/stage1.jpg");
+        waitingScreen = ImageIO.read(waitingImg);
     }
 
 
@@ -279,6 +286,9 @@ public class GameScreen extends JFrame {
                 GameObject obj = entry.getValue();
                 obj.paint(g2);
             }
+        if(waiting) {
+            g2.drawImage(waitingScreen, 0, 0, getWidth(), getHeight(), this);
+        }
     }
 
 
@@ -324,6 +334,10 @@ public class GameScreen extends JFrame {
             }
 
         }
+    }
+
+    public void finish_waiting(){
+        waiting = false;
     }
 
 
