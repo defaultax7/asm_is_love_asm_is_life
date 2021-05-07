@@ -180,6 +180,10 @@ survive_loop:
 	# enable shoot and move
 	jal process_tank_shoot
 	jal process_move_input
+	jal game_move_enemy1
+	li $a0, 0
+	jal enemy_shoot
+	jal update_score
 	
 	la $t0 , game_over
 	lw $t1 , 0($t0)
@@ -288,71 +292,20 @@ game_enemy_shoot:
 	beq $t1, $t2,update_score
 	li $a0, 1
 	jal enemy_shoot
+		
+	jal update_score
 	
-	###
-	
-update_score:
-	li $v0, 105
-	li $a0,11
-	la $t0,score_loc
-	lw $a1,0($t0)
-	lw $a2,4($t0)
-	la $a3,score_mes
-	syscall
+	jal update_timer # return time lapse in second
 
-update_timer:
-	
-	
-	# get the unit timestamp
-	li $v0 , 30
-	syscall
-	
-	la $t0 , start_time
-	lw $t0 , ($t0)
-	sub $a0 , $a0 , $t0 # calculate the time lapse since the start time
-	
-	li $t1 , 1000 # used to change ms to s
-	div $a0 , $t1 # divide the time lapse by 1000
-	mflo $a0 # move the quotient to $a0
-	la $t7 , ($a0) # back up the time lapse (sec) to $t7
-	
-	# only support 0-99 second
-	
-	li $t1 , 10 # used to get the first digit of the timer
-	div $a0 , $t1 # divide the time lapse (sec) by 10
-	mflo $a1 # move the first digit of the timer to $a1
-	mfhi $a0 # move the second digit of the timer to $a0
-	
-	la $t0 , timer_mes
-	
-	addi $a0 , $a0 , 48 # ascii 0 = 48
-	sll $a0 , $a0 , 8 # shift 8 bits (ascii take 8 bits per char) & little endian, so start with last digit
-	addi $a1 , $a1 , 48 # ascii 0 = 48
-	
-	add $t0 , $a0 , $zero
-	add $t0 , $a1 , $t0
-	sw $t0 , timer_mes
-	
-	li $v0, 105
-	li $a0,10
-	la $t0,timer_loc
-	lw $a1,0($t0)
-	lw $a2,4($t0)
-	la $a3,timer_mes
-	syscall
-	
 	# if it is over 60 sec, it is a game over
-	li $t6 , 60
-	beq $t7 , $t6 , time_up
+	li $t0 , 60
+	beq $v0 , $t0 , time_up
 	j game_refresh
 time_up:
 	la $t0, game_over
 	li $t1,1
 	sw $t1,0($t0)
 	j process_game_over
-	
-	
-	###
 
 game_refresh: # refresh screen
 	li $v0, 101
@@ -2237,4 +2190,62 @@ no_new_line:
 	bne $t3 , $t4 , print_map_loop # i != total number of grids	
 	
 	jr $ra	
+	
+	
+###
+update_score:
+	li $v0, 105
+	li $a0,11
+	la $t0,score_loc
+	lw $a1,0($t0)
+	lw $a2,4($t0)
+	la $a3,score_mes
+	syscall
+	jr $ra
+
+# update the timer and return the time lapse (unit : second)
+update_timer:
+	
+	# get the unit timestamp
+	li $v0 , 30
+	syscall
+	
+	la $t0 , start_time
+	lw $t0 , ($t0)
+	sub $a0 , $a0 , $t0 # calculate the time lapse since the start time
+	
+	li $t1 , 1000 # used to change ms to s
+	div $a0 , $t1 # divide the time lapse by 1000
+	mflo $a0 # move the quotient to $a0
+	la $t7 , ($a0) # back up the time lapse (sec) to $t7
+	
+	# only support 0-99 second
+	
+	li $t1 , 10 # used to get the first digit of the timer
+	div $a0 , $t1 # divide the time lapse (sec) by 10
+	mflo $a1 # move the first digit of the timer to $a1
+	mfhi $a0 # move the second digit of the timer to $a0
+	
+	la $t0 , timer_mes
+	
+	addi $a0 , $a0 , 48 # ascii 0 = 48
+	sll $a0 , $a0 , 8 # shift 8 bits (ascii take 8 bits per char) & little endian, so start with last digit
+	addi $a1 , $a1 , 48 # ascii 0 = 48
+	
+	add $t0 , $a0 , $zero
+	add $t0 , $a1 , $t0
+	sw $t0 , timer_mes
+	
+	li $v0, 105
+	li $a0,10
+	la $t0,timer_loc
+	lw $a1,0($t0)
+	lw $a2,4($t0)
+	la $a3,timer_mes
+	syscall
+	
+	# return the time lapse
+	la $v0 , ($t7)
+	
+	jr $ra			
 	
