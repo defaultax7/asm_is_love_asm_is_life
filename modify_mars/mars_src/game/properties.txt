@@ -42,7 +42,7 @@ tile1 = /game/images/wall1.png
 
 
 // music has some error
-soundCount = 8
+soundCount = 9
 sound0 = /game/sounds/start.wav
 sound1 = /game/sounds/move.wav
 sound2 = /game/sounds/playerCrack.wav
@@ -51,6 +51,7 @@ sound4 = /game/sounds/tankCrack.wav
 sound5 = /game/sounds/attack.wav
 sound6 = /game/sounds/bulletCrack.wav
 sound7 = /game/sounds/bgm.wav
+sound8 = /game/sounds/danger.wav
 
 
 seekDistance = 210

@@ -40,6 +40,10 @@ cheat_code_match_count : .word 0 # count the number of match input for cheat cod
 cheat_code : .asciiz "vfvf" # cheat code
 winned: .word 0 # cheat code : when activated (=1), the player wins directly
 
+danger_time : .word 50 # trigger danger when time lapse is over 50s
+danger : .word 0 # boolean : check if danger is triggered
+after_danger : .word 0 # boolean : check if the action for danger is done
+
 ### my argument
 
 enemy_num: 		.word 	0	# the number of enemys
@@ -182,6 +186,12 @@ survive_mode:
 	
 	# initialization for survive mode
 	jal init_survive_mode
+	
+	# play bgm
+	li $a0, 7
+	li $a1, 1
+	li $v0, 102
+	syscall
 
 survive_loop:
 	jal get_keyboard_input
@@ -240,7 +250,7 @@ started_game:
 	li $a0, 7
 	li $a1, 1
 	li $v0, 102
-	#syscall
+	syscall
 	###
 
 	
@@ -285,7 +295,9 @@ game_loop:
 	lw $t1,0($t0)
 	beq $t1,$zero, process_game_win
 	
-	
+time_almost_up:
+	jal process_time_almost_up
+		
 pause_screen:
 	jal process_pause_screen
 
@@ -2080,6 +2092,32 @@ stage_waiting_time_exit:
 	
 	jr $ra
 	
+# function : if almost time up, change the bgm to a more intense one	
+process_time_almost_up:
+
+	# action is done (only do once)
+	la $t0 , after_danger
+	lw $t0 , ($t0)
+	bne $t0 , $zero , no_time_almost_up
+
+	# check if danger is triggered
+	la $t0 , danger
+	lw $t0 , ($t0)
+	beq $t0 , $zero , no_time_almost_up
+	
+	# danger action
+	li $v0 , 127
+	syscall
+	
+	# action is done
+	la $t0 , after_danger
+	li $t1 , 1
+	sw $t1 , ($t0)
+	
+no_time_almost_up:	
+	
+	jr $ra	
+	
 ### survive section
 
 # function : write to bitmap
@@ -2287,6 +2325,19 @@ update_timer:
 	mflo $a0 # move the quotient to $a0
 	la $t7 , ($a0) # back up the time lapse (sec) to $t7
 	
+	# check if it is almost time up
+	la $t5 , danger_time
+	lw $t5 , ($t5)
+	slt $t4 , $t5 , $t7 
+	beq $t4 , $zero , no_danger
+	
+	# trigger danger 
+	la $t5 , danger
+	li $t4 , 1
+	sw $t4 , ($t5)
+	
+no_danger:	
+	
 	# only support 0-99 second
 	
 	li $t1 , 10 # used to get the first digit of the timer
@@ -2359,6 +2410,9 @@ checking_cheat_code:
 	li $t5 , 4
 	bne $t2 , $t5 , checking_cheat_code_exit # if the cheat code is not activated yet
 	
+	# reset cheat code count
+	sw $zero , ($t1)
+	
 	# activate the instant win
 	la $t5 , winned
 	li $t4 , 1
@@ -2372,3 +2426,8 @@ checking_cheat_code_exit:
 	
 	jr $ra
 	
+# function : check if the given location is open for spawn new thing or not	
+check_if_location_is_open:
+
+	jr $ra
+		
