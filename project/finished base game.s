@@ -1,3 +1,7 @@
+# Student name : Cheng Alex
+# Student id : 20713598
+# Email : achengad@connect.ust.hk
+
 .data
 # game setting
 enemy_num: 		.word 	0	# the number of enemys
@@ -522,7 +526,8 @@ nb_down_bullet:
 	# as the location start from top-left, adjustment by adding half of the bullet size is needed to make it start from the center
 	sub $s1 , $s1 , $s3 
 	sub $s2 , $s2 , $s3
-	
+ 
+	sub $s2 , $s2 , $s3
 	addi $s2 , $s2 , 16 # add 16 as $s2 is the center y location of the tank 
 	la $t0, bullet_locs # point to bullet_locs
 	sw $s1, 0($t0) # update the x location of bullet
@@ -537,6 +542,7 @@ nb_left_bullet:
 	sub $s1 , $s1 , $s3 
 	sub $s2 , $s2 , $s3
 	
+	sub $s1 , $s1 , $s3
 	subi $s1 , $s1 , 16 # subtract 16 as $s1 is the center x location of the tank
 	la $t0, bullet_locs # point to bullet_locs
 	sw $s1, 0($t0) # update the x location of bullet
@@ -711,7 +717,7 @@ cbc_top_right:
 	
 	# save the original $v0 to argument $a0 first
 	add $a0 , $zero , $v0
-	# bullet can pass through sea(-1) too, if add this instead of beq $v0 directly
+	# bullet can pass through sea(-1) too, add this instead of beq $v0 directly
 	slt $v0 , $zero , $v0
 	
 	beq $v0 , $zero , cbc_top_right_grid # if the result of check_hit_enemy is 0 it means no enemy hit
@@ -723,7 +729,7 @@ cbc_top_right_grid:
 	# $a0 point to the right
 	add $a0 , $s1 , $s3 
 	add $a0 , $a0 , $s3
-	#addi $a0 , $a0 , -1 # -1 as after adding the full size of the bullet, the location is point to the next grid instead of right most end of the bullet
+	addi $a0 , $a0 , -1 # -1 as after adding the full size of the bullet, the location is point to the next grid instead of right most end of the bullet
 	
 	# $a1 point to the top
 	add $a1 , $s2 , 0	
@@ -732,7 +738,7 @@ cbc_top_right_grid:
 	
 	# save the original $v0 to argument $a0 first
 	add $a0 , $zero , $v0
-	# bullet can pass through sea(-1) too, if add this instead of beq $v0 directly
+	# bullet can pass through sea(-1) too, add this instead of beq $v0 directly
 	slt $v0 , $zero , $v0
 	
 	beq $v0 , $zero , cbc_bottom_left # if the result of get_bitmap_cell is 0, it means the bullet does not hit anything that can stop it
@@ -900,13 +906,13 @@ che_enemy2:
 	addi $t4 , $t2 , 32 # y1 = y + 32
 	
 	slt $t0 , $a0 , $t3 # check if bullet_x < x1
-	beq $t0 , $zero , che_exit # go to check enemy2 if the above conditon is not true
+	beq $t0 , $zero , che_exit # exit if the above conditon is not true
 	slt $t0 , $t1 , $a0 # check if x < bullet_x
-	beq $t0 , $zero , che_exit # go to check enemy2 if the above conditon is not true
+	beq $t0 , $zero , che_exit # exit if the above conditon is not true
 	slt $t0 , $a1 , $t4 # check if bullet_y < y1
-	beq $t0 , $zero , che_exit # go to check enemy2 if the above conditon is not true
+	beq $t0 , $zero , che_exit # exit if the above conditon is not true
 	slt $t0 , $t2 , $a1 # check if y < bullet_y
-	beq $t0 , $zero , che_exit # go to check enemy2 if the above conditon is not true	
+	beq $t0 , $zero , che_exit # exit if the above conditon is not true	
 	# return 5
 	li $v0 , 5
 	j che_exit
@@ -1222,10 +1228,10 @@ hit_border:
 	slt $t3 , $t1 , $t3 # check if the x location of the right border > the width of the maze
 	bne $t3 , $zero , hit_exit # if it is true, it hit the border
 	
-	no_hit:
+no_hit:
 	li $v0 , 0 # set return value to 0 when hit the border
 	
-	hit_exit:
+hit_exit:
 
 #*** Your code ends here
 	
@@ -1433,7 +1439,7 @@ move_player_left:
 		j ml_no_move
 		
 		
-		ml_check_path1:
+ml_check_path1:
 		# hitbox checking for player's top-left 
 		sub $s3 , $s3 , $t2 # new x-loc = oringinal x-loc - speed 
 		addi $a0 , $s3 , 0 # pass x loc to get_bitmap_cell
@@ -1441,14 +1447,14 @@ move_player_left:
 		jal get_bitmap_cell
 		bne $v0 , $zero , ml_no_move # if there is blocking, do no move
 		
-		ml_check_path2:
+ml_check_path2:
 		# hitbox checking for player's top-left (bottom half part)
 		addi $a0 , $s3 , 0 # pass x loc to get_bitmap_cell
 		addi $a1 , $s4 , 16 # the y loc of the bottom half part to get_bitmap_cell
 		jal get_bitmap_cell
 		bne $v0 , $zero , ml_no_move # if there is blocking, do no move
 		
-		ml_move:
+ml_move:
 		sw $s3 , 0($s2) # update the x location
 		
 		# update the location of the player in the UI
@@ -1462,9 +1468,9 @@ move_player_left:
 		li $v0 , 1
 		j ml_exit
 		
-		ml_no_move:
+ml_no_move:
 		li $v0 , 0 # return 0 for no moving
-		ml_exit:
+ml_exit:
 		
 		# pop $ra & $s0-$s4 from the stack
 		lw $ra , 0($sp)
@@ -1532,7 +1538,7 @@ move_player_right:
 		beq $t0 , $zero , mr_check_path1 # if it is in bound, then go to check if there are any osobstacles 
 		j mr_no_move
 		
-		mr_check_path1:
+mr_check_path1:
 		# hitbox checking for player's top-right
 		add $s3 , $s3 , $t2 # new x loc = original x-loc + speed
 		
@@ -1545,7 +1551,7 @@ move_player_right:
 		jal get_bitmap_cell
 		bne $v0 , $zero , mr_no_move # if there is blocking , do no move
 		
-		mr_check_path2:
+mr_check_path2:
 		# hitbox checking for player's top-right (bottom half part)
 		add $a0 , $s3 , $s0 # pass x loc of right edge to get_bitmap_cell
 		addi $a0 , $a0 , -1
@@ -1553,7 +1559,7 @@ move_player_right:
 		jal get_bitmap_cell
 		bne $v0 , $zero , mr_no_move # if there is blocking , do no move
 		
-		mr_move:
+mr_move:
 		sw $s3 , 0($s2) # update the x location
 		
 		# update the location of the player in the UI
@@ -1567,10 +1573,10 @@ move_player_right:
 		li $v0 , 1
 		j mr_exit
 		
-		mr_no_move:
+mr_no_move:
 		li $v0 , 0 # return 0 for no moving
 		
-		mr_exit:
+mr_exit:
 
 		# pop $ra & $s0-$s4 from the stack
 		lw $ra , 0($sp)

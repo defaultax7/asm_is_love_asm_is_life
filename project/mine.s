@@ -1,3 +1,7 @@
+# Student name : Cheng Alex
+# Student id : 20713598
+# Email : achengad@connect.ust.hk
+
 .data
 # game setting
 temp :.asciiz " "
