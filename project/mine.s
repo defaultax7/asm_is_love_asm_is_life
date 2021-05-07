@@ -22,7 +22,7 @@ score_file : .asciiz "score.txt"
 # message box 
 create_score_file_mes : .asciiz "No score file is found! A new one is created"
 
-buffer : .space 100 # buffer for file reading 
+buffer : .word 20 # buffer for file reading 
 
 ### my argument
 
@@ -1846,18 +1846,17 @@ check_score:
 	
 score_file_found:
 
-	# read the file (first 100 characters)
+	# read the file (80 characters)
 	li $v0 , 14
 	la $a1 , buffer
-	li $a2 , 100
+	li $a2 , 80
 	move $a0 , $t0
 	syscall
 	
-	# !!! printing test
-	la $a0 , buffer
-	li $v0 , 4
+	# fill the score screen
+	li $v0 , 126
+	la $a0 , ($a1)
 	syscall
-	#
 	
 	# close the file
 	li $v0 , 16

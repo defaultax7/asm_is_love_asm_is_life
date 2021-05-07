@@ -9,6 +9,7 @@ import java.applet.AudioClip;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
 
 public class MenuScreen extends JFrame {
     private int height = 446;
@@ -43,6 +44,9 @@ public class MenuScreen extends JFrame {
         private int gapY = 42;
         private int maxindex = 3;
         private boolean checkingScore = false;
+        private String[] scoreElements = null;
+        private int[] elementsX = {27, 127, 227, 315, 27, 127, 227};
+        private int[] elementsY = {150, 150, 150, 150, 315, 315, 315};
 
         public Bg(Image image) {
 //            setup background image (assume selection screen must have background)
@@ -55,7 +59,7 @@ public class MenuScreen extends JFrame {
             this.cursorImg = cursorImg;
         }
 
-        public void setScoreBgImg(Image scoreBg){
+        public void setScoreBgImg(Image scoreBg) {
             this.scoreBgImg = scoreBg;
         }
 
@@ -93,21 +97,42 @@ public class MenuScreen extends JFrame {
 
         @Override
         protected void paintComponent(Graphics g) {
+
 //            super.paintComponent(g);
 //            draw the background
             g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
 
 //            draw the cursor
-            g.drawImage(cursorImg, cursorX, cursorY , null);
+            g.drawImage(cursorImg, cursorX, cursorY, null);
 
 //            draw the score if the score option is choosen
-            if(checkingScore){
+            if (checkingScore) {
                 g.drawImage(scoreBgImg, 0, 0, getWidth(), getHeight(), this);
+
+
+                if (scoreElements != null) {
+                    // the text should be white
+                    g.setColor(Color.white);
+                    g.setFont(new Font("Verdana", Font.BOLD, 14));
+
+                    for (int i = 0; i < scoreElements.length; i++) {
+                        g.drawString(scoreElements[i], elementsX[i] , elementsY[i]);
+                    }
+                }
             }
+        }
+
+        public void fillScoreScreen(String[] texts) {
+            scoreElements = texts;
         }
     }
 
-    public void toggleScoreScreen(){
+    public void fillScoreScreen(String[] texts) {
+        panel.fillScoreScreen(texts);
+        paintComponents(getGraphics());
+    }
+
+    public void toggleScoreScreen() {
         panel.checkingScore = !panel.checkingScore;
         paintComponents(getGraphics());
     }
@@ -122,7 +147,7 @@ public class MenuScreen extends JFrame {
         introMusic.play();
     }
 
-    public void terminate(){
+    public void terminate() {
         introMusic.stop();
         dispose();
     }
@@ -155,10 +180,12 @@ public class MenuScreen extends JFrame {
         panel = new Bg(bg);
         panel.setCursorImg(cursor);
         panel.setScoreBgImg(scoreBg);
+        panel.setLayout(null);
         add(panel);
 
         setVisible(true);
         setTitle(title);
+        setLocationRelativeTo(null); // open in center
 
 //        for getting the input
         keyListener = new MMIOInput(true);
