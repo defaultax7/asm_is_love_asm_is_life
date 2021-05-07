@@ -1,5 +1,8 @@
 .data
 # game setting
+temp :.asciiz " "
+temp2 :.asciiz "\n"
+
 start_time : .word 0 # for saving the start time in unit time stamp ( only save the low 32bit as it is big enough)
 timer_mes :  .asciiz "0" # base address for calling syscall 105 to show the timer
 timer_loc : .word 450 400 # location of the timer
@@ -22,7 +25,12 @@ score_file : .asciiz "score.txt"
 # message box 
 create_score_file_mes : .asciiz "No score file is found! A new one is created"
 
-buffer : .word 20 # buffer for file reading 
+survive_started : .word 0 # boolean : check for if the survive mode is started
+survive_enemy_num : .word 0 # track the number of enemy in survive mode
+
+# hardcode for testing, later read by file
+map_row : .word 26 # number of row of the bitmap 
+map_col : .word 26 # number of col of the bitmap
 
 ### my argument
 
@@ -120,6 +128,7 @@ maze_bitmap: .byte
 0 0 0 0 0 0 0 0 0 0 0 1 8 8 1 0 0 0 1 1 0 0 0 0 0 0 
 
 
+buffer : .word 20 # buffer for file reading 
 
 .text
 
@@ -141,8 +150,62 @@ menu_loop:
 	la $t0 , started
 	lw $t0 , ($t0)
 	bne $t0 , $zero , started_game 
+
+	# break the menu loop if "survive" was choosen	
+	la $t0 , survive_started
+	lw $t0 , ($t0)
+	bne $t0 , $zero , survive_mode 
 	
 	j menu_loop
+	
+survive_mode:
+	
+	li $v0 , 1
+	la $t0, survive_enemy_num
+	sw $v0, 0($t0)
+	# create survive game screen
+	li $v0 , 150
+	syscall
+	
+	# load the bitmap to maze_bitmap(data)
+	jal loop_survive_map
+	
+	# initialization for survive mode
+	jal init_survive_mode
+
+# !!!
+survive_loop:
+	jal get_keyboard_input
+	
+	# enable shoot and move
+	jal process_tank_shoot
+	jal process_move_input
+	
+	la $t0 , game_over
+	lw $t1 , 0($t0)
+	li $t0 , 1
+	beq $t0 , $t1 , process_survive_game_over
+	
+	
+survive_game_refresh:
+	li $v0 , 101
+	syscall
+	
+	li $a0 , 30 # wait for 30ms
+	jal have_a_nap	
+	
+
+	j survive_loop	
+	
+process_survive_game_over:
+	li $v0 , 103
+	li $a0 , 0
+	la $t0 , game_over_locs
+	lw $a1 , 0($t0)
+	lw $a2 , 4($t0)
+	li $a3 , 7
+	syscall
+	j survive_game_refresh	
 	
 started_game:
 
@@ -1802,14 +1865,38 @@ process_menu_cursor:
 	
 menu_enter:
 	la $t5 , cursor_index
-	lw $a2 , ($t5) # get the previous action index
+	lw $a2 , ($t5) # get the action index
+	
 	li $t0 , 3
 	beq $a2 , $t0 , exit_the_programm # check if selected option is exit (3)
+	li $t0 , 2
+	beq $a2 , $t0 , start_survive_game # check if selected option is survive (2)
 	li $t0 , 1
 	beq $a2 , $t0 , check_score # check if selected option is score checking (1)
 	li $t0 , 0
 	beq $a2 , $t0 , start_the_game # check if selected option is start (0)
 	j menu_exit
+
+exit_the_programm:
+
+	# close the menu
+	li $v0 , 122
+	syscall
+
+	# terminate the program 
+	li $v0 , 10
+	syscall	
+	
+start_survive_game:
+	# close the menu
+	li $v0 , 122
+	syscall
+	
+	# set survive_started to 1 
+	la $t0 , survive_started
+	li $t1 , 1
+	sw $t1 , ($t0)
+	j menu_exit	
 	
 check_score:
 	# open the score screen
@@ -1849,7 +1936,7 @@ score_file_found:
 	# read the file (80 characters)
 	li $v0 , 14
 	la $a1 , buffer
-	li $a2 , 80
+	li $a2 , 50
 	move $a0 , $t0
 	syscall
 	
@@ -1894,15 +1981,6 @@ start_the_game:
 	li $t1 , 1
 	sw $t1 , ($t0)
 	j menu_exit		
-	
-exit_the_programm:
-	# close the menu
-	li $v0 , 122
-	syscall
-
-	# terminate the program 
-	li $v0 , 10
-	syscall
 	
 cursor_up:
 
@@ -2017,4 +2095,146 @@ set_finish_waiting:
 stage_waiting_time_exit:		
 	
 	jr $ra
+	
+### survive section
+
+loop_survive_map:
+	la $t0 , maze_bitmap
+	
+	# get number of col
+	la $t1 , map_row
+	lw $t1 , ($t1) 
+	
+	# get number of row
+	la $t2 , map_col
+	lw $t2 , ($t2)
+	
+	# calculate the total number of grids
+	mult $t1 , $t2
+	mflo $t3
+	
+	li $t4 , 0 # i = 0
+	
+load_byte_to_map:
+	# save next byte to the map
+	add $t1 , $t0 , $t4
+	sb $zero , ($t1)
+	
+	# ??? later implement : load by file
+	
+	addi $t4 , $t4 , 1 # i++
+	bne $t3 , $t4 , load_byte_to_map # i != total number of grids
+	
+	jr $ra
+	
+
+init_survive_mode:
+	addi $sp, $sp, -12
+	sw $ra, 8($sp)
+	sw $s0, 4($sp)
+	sw $s1, 0($sp)
+	
+	# reset
+	la $t0 , move_iteration
+	sw $zero , ($t0)
+	la $t0 , buffered_move_key
+	sw $zero , ($t0)
+	
+	# create player
+	li $v0 , 103
+	la $t0 , player_id
+	lw $a0 , ($t0)
+	# ??? init player location , can make it random
+	li $a1 , 96
+	li $a2 , 192
+	li $a3 , 1
+	la $t0 , player_locs
+	sw $a1 ,($t0)
+	sw $a2 , 4($t0)
+	syscall
+	
+	# create bullet and hide it
+	li $v0, 103
+	la $t0, bullet_id
+	lw $a0, 0($t0) 
+	# some where beyond the screen
+	li $a1, 1000 
+	li $a2, 1000
+	li $a3, 3
+	la $t0, player_id #id of the corresponding tank 
+	lw $t1, 0($t0)
+	la $t0, bullet_locs
+	sw $a1, 0($t0)
+	sw $a2, 4($t0)
+	syscall	
+	
+	# create the specified number of enemys
+	la $t0, survive_enemy_num
+	lw $a0, 0($t0) 
+
+	la $t0, enemy_ids
+	lw $a1, 0($t0)
+	lw $a2, 4($t0)
+	li $v0, 108
+	syscall
+	
+	# refresh
+	li $v0 , 101
+	syscall
+	lw $ra, 8($sp)
+	lw $s0, 4($sp)
+	lw $s1, 0($sp)
+	addi $sp, $sp, 12
+	jr $ra
+	
+### helper procedure
+print_the_bitmap:
+	la $t0 , maze_bitmap
+	
+	# get number of col
+	la $t1 , map_row
+	lw $t1 , ($t1) 
+	
+	# get number of row
+	la $t2 , map_col
+	lw $t2 , ($t2)
+	
+	# calculate the total number of grids
+	mult $t1 , $t2
+	mflo $t3
+	
+	li $t4 , 0 # i = 0
+	li $t5 , 0 # j = 0
+	
+print_map_loop:
+	# get next byte of the map
+	add $t6 , $t0 , $t4
+	lbu $t6 , ($t6)
+	
+	# print the byte
+	li $v0 , 1
+	la $a0 , ($t6)
+	syscall
+	
+	# print a space
+	li $v0 , 4
+	la $a0 , temp
+	syscall
+	
+	addi $t5 , $t5 , 1 # j++
+	
+	bne $t5 , $t2 , no_new_line # j != number of col
+	
+	# print 
+	li $v0 , 4
+	la $a0 , temp2
+	syscall
+	
+	la $t5 , ($zero)
+no_new_line:
+
+	addi $t4 , $t4 , 1 # i++
+	bne $t3 , $t4 , print_map_loop # i != total number of grids	
+	
+	jr $ra	
 	
