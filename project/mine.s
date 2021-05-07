@@ -709,6 +709,7 @@ nb_down_bullet:
 	sub $s1 , $s1 , $s3 
 	sub $s2 , $s2 , $s3
 	
+	sub $s2 , $s2 , $s3
 	addi $s2 , $s2 , 16 # add 16 as $s2 is the center y location of the tank 
 	la $t0, bullet_locs # point to bullet_locs
 	sw $s1, 0($t0) # update the x location of bullet
@@ -723,6 +724,7 @@ nb_left_bullet:
 	sub $s1 , $s1 , $s3 
 	sub $s2 , $s2 , $s3
 	
+	sub $s1 , $s1 , $s3
 	subi $s1 , $s1 , 16 # subtract 16 as $s1 is the center x location of the tank
 	la $t0, bullet_locs # point to bullet_locs
 	sw $s1, 0($t0) # update the x location of bullet
