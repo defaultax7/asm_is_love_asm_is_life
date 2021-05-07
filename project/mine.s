@@ -32,6 +32,10 @@ survive_enemy_num : .word 0 # track the number of enemy in survive mode
 map_row : .word 26 # number of row of the bitmap 
 map_col : .word 26 # number of col of the bitmap
 
+cheat_code_match_count : .word 0 # count the number of match input for cheat code
+cheat_code : .asciiz "vfvf" # cheat code
+winned: .word 0 # cheat code : when activated (=1), the player wins directly
+
 ### my argument
 
 enemy_num: 		.word 	0	# the number of enemys
@@ -260,6 +264,14 @@ show_stage1_screen:
 
 game_loop:	
 	jal get_keyboard_input
+	
+	jal checking_cheat_code	
+	
+	# cheat code
+	la $t0 , winned
+	lw $t0 , ($t0)
+	bne $t0 , $zero , process_game_win
+	
 	la $t0, game_over
 	lw $t1, 0($t0)
 	li $t0,1
@@ -268,6 +280,7 @@ game_loop:
 	la $t0,enemy_alive_num
 	lw $t1,0($t0)
 	beq $t1,$zero, process_game_win
+	
 	
 pause_screen:
 	jal process_pause_screen
@@ -2011,6 +2024,8 @@ menu_exit:
 	syscall
 
 ### in game section
+
+# function : process pause menu
 process_pause_screen:
 	
 	la $t0 , input_key
@@ -2024,7 +2039,8 @@ pause_screen_exit:
 	
 	jr $ra
 	
-	
+
+# function : control stage wait time
 process_stage_waiting_time:
 	# get the unit timestamp
 	li $v0 , 30
@@ -2060,6 +2076,7 @@ stage_waiting_time_exit:
 	
 ### survive section
 
+# function : write to bitmap
 loop_survive_map:
 	la $t0 , maze_bitmap
 	
@@ -2089,7 +2106,7 @@ load_byte_to_map:
 	
 	jr $ra
 	
-
+# function : init for survive mode
 init_survive_mode:
 	addi $sp, $sp, -12
 	sw $ra, 8($sp)
@@ -2148,7 +2165,8 @@ init_survive_mode:
 	lw $s1, 0($sp)
 	addi $sp, $sp, 12
 	jr $ra
-	
+
+# function : respawn enemy for survive mode
 respawn_enemy:
 	# reset number of alive enemy
 	li $v0 , 1
@@ -2172,6 +2190,8 @@ respawn_enemy:
 	jr $ra	
 	
 ### helper procedure
+
+# function : print bitmap in console
 print_the_bitmap:
 	la $t0 , maze_bitmap
 	
@@ -2222,7 +2242,8 @@ no_new_line:
 	
 	jr $ra	
 	
-	
+
+# function : update score text
 # update the score text
 update_score:
 	# get the score
@@ -2243,6 +2264,7 @@ update_score:
 	syscall
 	jr $ra
 
+# function : update timer
 # update the timer and return the time lapse (unit : second)
 update_timer:
 	
@@ -2288,7 +2310,8 @@ update_timer:
 	la $v0 , ($t7)
 	
 	jr $ra			
-	
+
+# function : add score		
 add_score:
 	# get the current score
 	la $t0 , score
@@ -2302,3 +2325,44 @@ add_score:
 	sw $t1 , ($t0)
 	
 	jr $ra	
+
+# function : check cheat code
+checking_cheat_code:
+	la $t0 , input_key
+	lw $t0 , ($t0)
+	
+	beq $t0 , $zero , checking_cheat_code_exit # input key 0 = no input
+	
+	# get how the number of success cheat code match count
+	la $t1 , cheat_code_match_count
+	lw $t2 , ($t1)
+	
+	# get the next code to check
+	la $t3 , cheat_code
+	add $t3 , $t3 , $t2	
+	lbu $t3 , ($t3)
+	
+	bne $t0 , $t3 , cheat_code_not_match # if the next code is not the input key
+	
+	# match count ++
+	addi $t2 , $t2 , 1
+	# update the match count
+	sw $t2 , ($t1)
+
+	# hardcode , later implement
+	li $t5 , 4
+	bne $t2 , $t5 , checking_cheat_code_exit # if the cheat code is not activated yet
+	
+	# activate the instant win
+	la $t5 , winned
+	li $t4 , 1
+	sw $t4 , ($t5)
+
+cheat_code_not_match:
+	# reset the cheat code count
+	sw $zero , ($t1) 			
+
+checking_cheat_code_exit:
+	
+	jr $ra
+	
