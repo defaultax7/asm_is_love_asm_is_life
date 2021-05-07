@@ -185,7 +185,7 @@ public class MenuScreen extends JFrame {
 
         setVisible(true);
         setTitle(title);
-        setLocationRelativeTo(null); // open in center
+//        setLocationRelativeTo(null); // open in center
 
 //        for getting the input
         keyListener = new MMIOInput(true);

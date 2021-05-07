@@ -163,6 +163,8 @@ survive_mode:
 	li $v0 , 1
 	la $t0, survive_enemy_num
 	sw $v0, 0($t0)
+	la $t0, enemy_alive_num
+	sw $v0, 0($t0)
 	# create survive game screen
 	li $v0 , 150
 	syscall
@@ -173,9 +175,17 @@ survive_mode:
 	# initialization for survive mode
 	jal init_survive_mode
 
-# !!!
 survive_loop:
 	jal get_keyboard_input
+	
+	la $t0 , game_over
+	lw $t1 , 0($t0)
+	li $t0 , 1
+	beq $t0 , $t1 , process_survive_game_over
+	
+	la $t0 , enemy_alive_num
+	lw $t1 , 0($t0)
+	beq $t1 , $zero , respawn_enemy
 	
 	# enable shoot and move
 	jal process_tank_shoot
@@ -184,11 +194,6 @@ survive_loop:
 	li $a0, 0
 	jal enemy_shoot
 	jal update_score
-	
-	la $t0 , game_over
-	lw $t1 , 0($t0)
-	li $t0 , 1
-	beq $t0 , $t1 , process_survive_game_over
 	
 	
 survive_game_refresh:
@@ -231,7 +236,6 @@ started_game:
 	###
 
 	
-	
 	# Initialize the game
 	jal init_game
 
@@ -247,7 +251,7 @@ show_stage1_screen:
 	
 	la $t0 , finish_waiting
 	lw $t0 , ($t0)
-	bne $t0 , $zero , game_loop # start the game when 1 seconds has passed
+	bne $t0 , $zero , game_loop # start the game when 1 second has passed
 	
 	li $a0, 30 # wait for 30ms 
 	jal have_a_nap
@@ -876,7 +880,7 @@ cbc_top_right:
 	
 	# save the original $v0 to argument $a0 first
 	add $a0 , $zero , $v0
-	# bullet can pass through sea(-1) too, if add this instead of beq $v0 directly
+	# bullet can pass through sea(-1) too, add this instead of beq $v0 directly
 	slt $v0 , $zero , $v0
 	
 	beq $v0 , $zero , cbc_top_right_grid # if the result of check_hit_enemy is 0 it means no enemy hit
@@ -1154,6 +1158,8 @@ pc_hit_enemy1:
 	lw $t1,0($t0)
 	subi $t1,$t1,1
 	sw $t1,0($t0)
+	
+	jal add_score
 
 	lw $ra, 0($sp)
 	addi $sp,$sp,4
@@ -1190,6 +1196,9 @@ pc_hit_enemy2:
 	lw $t1,0($t0)
 	subi $t1,$t1,1
 	sw $t1,0($t0)
+	
+	jal add_score
+	
 	lw $ra,0($sp)
 	addi $sp,$sp,4
 	jr $ra
@@ -2140,6 +2149,28 @@ init_survive_mode:
 	addi $sp, $sp, 12
 	jr $ra
 	
+respawn_enemy:
+	# reset number of alive enemy
+	li $v0 , 1
+	la $t0 , enemy_alive_num
+	sw $v0 , 0($t0)
+	
+	li $v0 , 1
+	la $t0 , enemy1_alive
+	sw $v0 , 0($t0)
+
+	# create the specified number of enemys
+	la $t0, survive_enemy_num
+	lw $a0, 0($t0) 
+
+	la $t0, enemy_ids
+	lw $a1, 0($t0)
+	lw $a2, 4($t0)
+	li $v0, 108
+	syscall
+
+	jr $ra	
+	
 ### helper procedure
 print_the_bitmap:
 	la $t0 , maze_bitmap
@@ -2192,14 +2223,23 @@ no_new_line:
 	jr $ra	
 	
 	
-###
+# update the score text
 update_score:
-	li $v0, 105
-	li $a0,11
-	la $t0,score_loc
-	lw $a1,0($t0)
-	lw $a2,4($t0)
-	la $a3,score_mes
+	# get the score
+	la $t0 , score
+	lw $t0 , ($t0)
+	
+	addi $t0 , $t0 , 48 # ascii 0 = 48
+	
+	# update the score message
+	sw $t0 , score_mes
+
+	li $v0 , 105
+	li $a0 , 11
+	la $t0 , score_loc
+	lw $a1 , 0($t0)
+	lw $a2 , 4($t0)
+	la $a3 , score_mes
 	syscall
 	jr $ra
 
@@ -2249,3 +2289,16 @@ update_timer:
 	
 	jr $ra			
 	
+add_score:
+	# get the current score
+	la $t0 , score
+	lw $t1 , ($t0)
+	
+	# add it by 1
+	li $t2 , 1
+	add $t1 , $t1 , $t2
+	
+	# update the score
+	sw $t1 , ($t0)
+	
+	jr $ra	
