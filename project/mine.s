@@ -299,7 +299,7 @@ game_loop:
 	# cheat code
 	la $t0 , winned
 	lw $t0 , ($t0)
-	bne $t0 , $zero , process_game_win
+	bne $t0 , $zero , process_instant_win
 	
 	la $t0, game_over
 	lw $t1, 0($t0)
@@ -385,6 +385,13 @@ process_game_win:
 	la $a3,game_win_text
 	syscall
 	j game_refresh
+	
+process_instant_win:
+
+	jal hit_enemy1
+	jal hit_enemy2
+
+	j process_game_win	
 #--------------------------------------------------------------------
 # enemy_shoot
 #--------------------------------------------------------------------
@@ -1187,7 +1194,10 @@ pc_hit_brick:
 	addi $sp,$sp,4
 	jr $ra
 
-pc_hit_enemy1:
+hit_enemy1:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+
 	li $v0,102
 	li $a0,2
 	li $a1,0
@@ -1220,13 +1230,24 @@ pc_hit_enemy1:
 	sw $t1,0($t0)
 	
 	jal add_score
+	
+	lw $ra, 0($sp)
+	addi $sp,$sp,4
+	
+	jr $ra
+
+pc_hit_enemy1:
+
+	jal hit_enemy1
 
 	lw $ra, 0($sp)
 	addi $sp,$sp,4
 	jr $ra
 
+hit_enemy2:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
 
-pc_hit_enemy2:
 	li $v0,102
 	li $a0,4
 	li $a1,0
@@ -1258,6 +1279,15 @@ pc_hit_enemy2:
 	sw $t1,0($t0)
 	
 	jal add_score
+	
+	lw $ra, 0($sp)
+	addi $sp,$sp,4
+	
+	jr $ra
+
+pc_hit_enemy2:
+
+	jal hit_enemy2
 	
 	lw $ra,0($sp)
 	addi $sp,$sp,4
