@@ -178,8 +178,7 @@ public class GameScreen extends JFrame {
         initGameScreen();
 
 //        stage 1 waiting screen
-        File waitingImg = new File("game/images/stage1.jpg");
-        waitingScreen = ImageIO.read(waitingImg);
+        waitingScreen = ImageIO.read(getClass().getResourceAsStream("/game/images/stage1.jpg"));
     }
 
 

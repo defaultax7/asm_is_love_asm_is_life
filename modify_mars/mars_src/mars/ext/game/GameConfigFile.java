@@ -42,10 +42,12 @@ public class GameConfigFile {
     static final String SOUND_ATTACK = "/game/sounds/attack.wav";
     static final String SOUND_PLAYERCRACK = "/game/sounds/playerCrack.wav";
     static final String SOUND_PROP = "/game/sounds/prop.wav";
+    static final String SOUND_BGM = "/game/sounds/bgm.wav";
+    static final String SOUND_DANGER = "/game/sounds/danger.wav";
 
     static final String RESOURCE_IMAGE = "/game/images/tankAll.gif";
 
-    static String[] usedGameSounds = {SOUND_START, SOUND_MOVE, SOUND_TANKCRACK, SOUND_BULLETCRACK, SOUND_ATTACK, SOUND_PLAYERCRACK, SOUND_PROP};
+    static String[] usedGameSounds = {SOUND_START, SOUND_MOVE, SOUND_TANKCRACK, SOUND_BULLETCRACK, SOUND_ATTACK, SOUND_PLAYERCRACK, SOUND_PROP , SOUND_BGM , SOUND_DANGER};
     public static int[][] playerPosiontions;
     public static Map<String, int[]> POS = new HashMap<String, int[]>();
     static {

@@ -148,7 +148,8 @@ public class MenuScreen extends JFrame {
         public void changeSelectedTank(int id) {
 
             try {
-                selectedTankImg = ImageIO.read(new File("game/images/tank" + id + ".png"));
+
+                selectedTankImg = ImageIO.read(getClass().getResourceAsStream("/game/images/tank" + id + ".png"));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -196,22 +197,22 @@ public class MenuScreen extends JFrame {
 
 
     public void init() {
-        File bgImg = new File("game/images/menu.jpg");
-        File cursorImg = new File("game/images/cursor.png");
-        File scoreImg = new File("game/images/score.jpg");
-        File tankSelectionImg = new File("game/images/tank_selection.jpg");
-        File defaultTankImg = new File("game/images/tank0.png");
+//        File bgImg = new File("game/images/menu.jpg");
+//        File cursorImg = new File("game/images/cursor.png");
+//        File scoreImg = new File("game/images/score.jpg");
+//        File tankSelectionImg = new File("game/images/tank_selection.jpg");
+//        File defaultTankImg = new File("game/images/tank0.png");
         BufferedImage bg = null;
         BufferedImage cursor = null;
         BufferedImage scoreBg = null;
         BufferedImage tankSelectionBg = null;
         BufferedImage defaultTank = null;
         try {
-            bg = ImageIO.read(bgImg);
-            cursor = ImageIO.read(cursorImg);
-            scoreBg = ImageIO.read(scoreImg);
-            tankSelectionBg = ImageIO.read(tankSelectionImg);
-            defaultTank = ImageIO.read(defaultTankImg);
+            bg = ImageIO.read(getClass().getResourceAsStream("/game/images/menu.jpg"));
+            cursor = ImageIO.read(getClass().getResourceAsStream("/game/images/cursor.png"));
+            scoreBg = ImageIO.read(getClass().getResourceAsStream("/game/images/score.jpg"));
+            tankSelectionBg = ImageIO.read(getClass().getResourceAsStream("/game/images/tank_selection.jpg"));
+            defaultTank = ImageIO.read(getClass().getResourceAsStream("/game/images/tank0.png"));
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Can not load background image");
