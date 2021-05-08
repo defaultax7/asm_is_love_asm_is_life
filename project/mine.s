@@ -885,6 +885,7 @@ check_bullet_collision:
 	add $a2,$a2,$a2 #pass the full size
 	jal hit_border
 	li $a0, 2 #collision type
+	la $a2, ($v0) # pass if out-bound to process_collision
 	beq $v0, $zero, cbc_top_left
 	jal process_collision
 
@@ -1134,7 +1135,7 @@ che_exit:
 	jr $ra
 
 #--------------------------------------------------------------------
-# procedure: process_collision(type,index)
+# procedure: process_collision(type,index,out_bound)
 # process bullet collision
 # Only when type is 1, we need the index parameter which denotes the index of the bitmap cell where the collision happened
 #--------------------------------------------------------------------
@@ -1152,6 +1153,9 @@ process_collision:
 	la $t2 , tank_selection_index
 	lw $t2 , ($t2)
 	beq $t2 , $zero , no_break_stone
+	
+	bne $a2 , $zero , no_break_stone # out_bound is 1, that mean nothing to break
+	
 	li $t1 , 2
 	beq $a0 , $t1 , pc_hit_brick
 no_break_stone:
@@ -1452,10 +1456,10 @@ hit_border:
 	slt $t3 , $t1 , $t3 # check if the x location of the right border > the width of the maze
 	bne $t3 , $zero , hit_exit # if it is true, it hit the border
 	
-	no_hit:
-	li $v0 , 0 # set return value to 0 when hit the border
+no_hit:
+	li $v0 , 0 # set return value to 0 when not hit the border
 	
-	hit_exit:
+hit_exit:
 
 #*** Your code ends here
 	
