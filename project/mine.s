@@ -41,6 +41,7 @@ cheat_code_match_count : .word 0 # count the number of match input for cheat cod
 cheat_code : .asciiz "vfvf" # cheat code
 winned: .word 0 # cheat code : when activated (=1), the player wins directly
 
+timeup_time : .word 60 # timeup when it is over 60s
 danger_time : .word 50 # trigger danger when time lapse is over 50s
 danger : .word 0 # boolean : check if danger is triggered
 after_danger : .word 0 # boolean : check if the action for danger is done
@@ -344,8 +345,9 @@ game_enemy_shoot:
 	
 	jal update_timer # return time lapse in second
 
-	# if it is over 60 sec, it is a game over
-	li $t0 , 60
+	# if it is timeup, it is a game over
+	la $t0 , timeup_time
+	lw $t0 , ($t0)
 	beq $v0 , $t0 , time_up
 	j game_refresh
 time_up:
@@ -1145,6 +1147,15 @@ process_collision:
 	# swtich case
 	li $t1,1
 	beq $a0,$t1,pc_hit_brick
+	
+	# new tank sepcial ability : break stone
+	la $t2 , tank_selection_index
+	lw $t2 , ($t2)
+	beq $t2 , $zero , no_break_stone
+	li $t1 , 2
+	beq $a0 , $t1 , pc_hit_brick
+no_break_stone:
+		
 	li $t1,4
 	beq $a0,$t1,pc_hit_enemy1
 	li $t1,5
