@@ -19,7 +19,5 @@ public class Syscall128 extends AbstractSyscall{
         GameScreen gs = GameScreen.getInstance();
         MazeGameObject player = (MazeGameObject) gs.getGameObject(0,1);
         player.changeSprite(a0);
-
-        System.out.println(a0);
     }
 }

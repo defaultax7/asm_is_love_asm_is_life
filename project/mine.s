@@ -12,6 +12,7 @@ timer_mes :  .asciiz "0" # base address for calling syscall 105 to show the time
 timer_loc : .word 450 400 # location of the timer
 
 score : .word 0 # score
+score_digits : .word 4 # number of digits of score message
 score_mes : .asciiz "0000" # base address for calling syscall 105 to show the score
 score_loc : .word 430 20 # location of the score
 
@@ -2421,10 +2422,62 @@ update_score:
 	la $t0 , score
 	lw $t0 , ($t0)
 	
-	addi $t0 , $t0 , 48 # ascii 0 = 48
+	# get the number of digits of the score text
+	la $t1 , score_digits
+	lw $t1 , ($t1)
 	
-	# update the score message
-	sw $t0 , score_mes
+	la $t2 , ($t1) # i = number of digits
+	
+# update score message, digit by digit	
+update_score_loop:
+	la $t3 , ($t2) # j = i
+	li $t4 , 1 # k = 1
+	
+time_ten_loop:
+
+	addi $t3 , $t3 , -1 # j--
+	beq $t3 , $zero , time_ten_loop_exit # if j == 0 , stop time ten
+
+	# k *= 10
+	li $t5 , 10
+	mult $t4 , $t5
+	mflo $t4
+	
+	j time_ten_loop	
+	
+time_ten_loop_exit:
+
+	div $t0 , $t4 # score / k
+	mflo $t4 # number in i(th) digit
+	mfhi $t0 # move remainder to score
+	
+	addi $t4 , $t4 , 48 # ascii 0 = 48
+	
+	# j = number of digits - i
+	la $t3 , ($t1) 
+	sub $t3 , $t3 , $t2 
+
+	la $t5 , score_mes	
+# save the ascii code back to the right bit
+digit_shifting_loop:	
+
+	beq $t3 , $zero , digit_shifting_loop_exit # if j == 0 , stop shifting
+	addi $t3 , $t3 , -1 # j--
+	add $t5 , $t5 , 1 # shift by 1 digit
+	
+	j digit_shifting_loop
+	
+digit_shifting_loop_exit:
+
+	# update the i(th) digit in score message
+	sb $t4 , ($t5)
+	
+	addi $t2 , $t2 , -1 # i--
+	beq $t2 , $zero , update_score_loop_exit # if i == 0 , it is finished		
+
+	j update_score_loop	
+
+update_score_loop_exit:		
 
 	li $v0 , 105
 	li $a0 , 11
@@ -2501,8 +2554,8 @@ add_score:
 	la $t0 , score
 	lw $t1 , ($t0)
 	
-	# add it by 1
-	li $t2 , 1
+	# add it by 10
+	li $t2 , 10
 	add $t1 , $t1 , $t2
 	
 	# update the score
