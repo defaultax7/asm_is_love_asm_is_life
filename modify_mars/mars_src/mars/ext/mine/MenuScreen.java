@@ -9,7 +9,7 @@ import java.applet.AudioClip;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.ArrayList;
+import java.io.IOException;
 
 public class MenuScreen extends JFrame {
     private int height = 446;
@@ -34,16 +34,31 @@ public class MenuScreen extends JFrame {
         return instance;
     }
 
+    public void showSelectedTank(int id) {
+        panel.changeSelectedTank(id);
+        paintComponents(getGraphics());
+    }
+
+    public void toggleTankSelectionScreen() {
+        panel.tankSelecting = !panel.tankSelecting;
+        paintComponents(getGraphics());
+    }
+
     private class Bg extends JPanel {
         private Image cursorImg;
         private Image image;
         private Image scoreBgImg;
+        private Image tankSelectionBgImg;
+        private Image selectedTankImg = null;
         private int cursorIndex = 0;
         private int cursorX = 115;
         private int cursorY = 237;
         private int gapY = 42;
         private int maxindex = 3;
+        private int tankSelectionX = 180;
+        private int tankSelectionY = 170;
         private boolean checkingScore = false;
+        private boolean tankSelecting = false;
         private String[] scoreElements = null;
         private int[] elementsX = {27, 127, 227, 315, 27, 127, 227};
         private int[] elementsY = {150, 150, 150, 150, 315, 315, 315};
@@ -109,21 +124,43 @@ public class MenuScreen extends JFrame {
             if (checkingScore) {
                 g.drawImage(scoreBgImg, 0, 0, getWidth(), getHeight(), this);
 
-
                 if (scoreElements != null) {
                     // the text should be white
                     g.setColor(Color.white);
                     g.setFont(new Font("Verdana", Font.BOLD, 14));
 
                     for (int i = 0; i < scoreElements.length; i++) {
-                        g.drawString(scoreElements[i], elementsX[i] , elementsY[i]);
+                        g.drawString(scoreElements[i], elementsX[i], elementsY[i]);
                     }
                 }
+            }
+            if (tankSelecting) {
+                g.drawImage(tankSelectionBgImg, 0, 0, getWidth(), getHeight(), this);
+
+                g.drawImage(selectedTankImg, tankSelectionX, tankSelectionY, null);
             }
         }
 
         public void fillScoreScreen(String[] texts) {
             scoreElements = texts;
+        }
+
+        public void changeSelectedTank(int id) {
+
+            try {
+                selectedTankImg = ImageIO.read(new File("game/images/tank" + id + ".png"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        public void setTankSelectionBgImg(Image tankSelectionImg) {
+            tankSelectionBgImg = tankSelectionImg;
+        }
+
+        public void setDefaultTank(Image defaultTank) {
+            selectedTankImg = defaultTank;
         }
     }
 
@@ -162,13 +199,19 @@ public class MenuScreen extends JFrame {
         File bgImg = new File("game/images/menu.jpg");
         File cursorImg = new File("game/images/cursor.png");
         File scoreImg = new File("game/images/score.jpg");
+        File tankSelectionImg = new File("game/images/tank_selection.jpg");
+        File defaultTankImg = new File("game/images/tank0.png");
         BufferedImage bg = null;
         BufferedImage cursor = null;
         BufferedImage scoreBg = null;
+        BufferedImage tankSelectionBg = null;
+        BufferedImage defaultTank = null;
         try {
             bg = ImageIO.read(bgImg);
             cursor = ImageIO.read(cursorImg);
             scoreBg = ImageIO.read(scoreImg);
+            tankSelectionBg = ImageIO.read(tankSelectionImg);
+            defaultTank = ImageIO.read(defaultTankImg);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Can not load background image");
@@ -180,6 +223,8 @@ public class MenuScreen extends JFrame {
         panel = new Bg(bg);
         panel.setCursorImg(cursor);
         panel.setScoreBgImg(scoreBg);
+        panel.setTankSelectionBgImg(tankSelectionBg);
+        panel.setDefaultTank(defaultTank);
         panel.setLayout(null);
         add(panel);
 

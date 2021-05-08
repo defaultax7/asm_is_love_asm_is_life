@@ -44,6 +44,10 @@ danger_time : .word 50 # trigger danger when time lapse is over 50s
 danger : .word 0 # boolean : check if danger is triggered
 after_danger : .word 0 # boolean : check if the action for danger is done
 
+selected_tank : .word 0 # boolean : check for if player select a tank
+tank_selection_index : .word 0 # cursor index of tank selection
+tank_selection_max_index : .word 2 # currently support 2 tanks only
+
 ### my argument
 
 enemy_num: 		.word 	0	# the number of enemys
@@ -161,7 +165,7 @@ menu_loop:
 	# break the menu loop if "start" was choosen
 	la $t0 , started
 	lw $t0 , ($t0)
-	bne $t0 , $zero , started_game 
+	bne $t0 , $zero , started_game
 
 	# break the menu loop if "survive" was choosen	
 	la $t0 , survive_started
@@ -233,7 +237,9 @@ process_survive_game_over:
 	li $a3 , 7
 	syscall
 	j survive_game_refresh	
-	
+
+### end of survive mode	
+		
 started_game:
 
 #	jal input_game_params
@@ -256,6 +262,12 @@ started_game:
 	
 	# Initialize the game
 	jal init_game
+	
+	# change sprite
+	li $v0 , 128
+	la $t0 , tank_selection_index
+	lw $a0 , ($t0)
+	syscall
 
 	# save the reference time for counting 1 seconds
 	la $t0 , timer_for_wait_screen
@@ -1965,6 +1977,28 @@ score_screen_loop_exit:
 	j menu_exit	
 	
 start_the_game:
+
+	# show the tank selection screen
+	li $v0 , 130
+	syscall
+
+tank_selection_loop:
+	jal get_keyboard_input
+	
+	jal process_tank_selection
+	
+	# check if the player has already selected a tank or not
+	la $t0 , selected_tank
+	lw $t0 , ($t0)
+	bne $t0 , $zero , finish_tank_selection
+	
+	li $a0 , 30 # wait for 30ms
+	jal have_a_nap	
+
+	j tank_selection_loop
+
+finish_tank_selection:		
+
 	# close the menu
 	li $v0 , 122
 	syscall
@@ -1973,6 +2007,8 @@ start_the_game:
 	la $t0 , started
 	li $t1 , 1
 	sw $t1 , ($t0)
+	
+	
 	j menu_exit		
 	
 cursor_up:
@@ -2233,6 +2269,83 @@ respawn_enemy:
 
 	jr $ra	
 	
+	
+### tank selection section
+process_tank_selection:
+
+	la $t0 , input_key
+	lw $t0 , ($t0)
+	
+	li $t1 , 97 # ascii code of a 		
+	beq $t0 , $t1 , tank_selection_cursor_move_left
+	li $t1 , 100 # ascii code of d 		
+	beq $t0 , $t1 , tank_selection_cursor_move_right
+	li $t1 , 32 # ascii code of space 		
+	beq $t0 , $t1 , tank_selection_enter	
+
+	j process_tank_selection_exit
+tank_selection_cursor_move_left:
+
+
+	# tank selection move left (-1)
+	la $t0 , tank_selection_index
+	lw $a0 , ($t0)
+	addi $a0 , $a0 , -1
+	
+	slt $t1 , $a0 , $zero # check if index become negative
+	beq $t1 , $zero , update_tank_index
+	
+	# load the max index
+	la $t0 , tank_selection_max_index
+	lw $t0 , ($t0)
+	
+	add $a0 , $a0 , $t0 # add the max index to make it as circular
+
+	j update_tank_index
+	
+tank_selection_cursor_move_right:
+	# tank selection move right (+1)
+	la $t0 , tank_selection_index
+	lw $a0 , ($t0)
+	addi $a0 , $a0 , 1
+	
+	# load the max index
+	la $t0 , tank_selection_max_index
+	lw $t0 , ($t0)
+	
+	# mod by max index (%=2)
+	div $a0 , $t0
+	mfhi $a0 # get the remainder 
+
+	j update_tank_index
+	
+update_tank_index:
+
+	# update the tank index in data
+	la $t0 , tank_selection_index
+	sw $a0 , ($t0)
+
+	# update selected tank image ($a0 is ready)
+	li $v0 , 129
+	syscall
+
+	j process_tank_selection_exit		
+	
+tank_selection_enter:
+
+	# update selected_tank to 1
+	la $t0 , selected_tank
+	li $t1 , 1
+	sw $t1 , ($t0)
+	
+	
+	j process_tank_selection_exit
+	
+process_tank_selection_exit:
+	
+	jr $ra	
+	
+	
 ### helper procedure
 
 # function : print bitmap in console
@@ -2427,7 +2540,13 @@ checking_cheat_code_exit:
 	jr $ra
 	
 # function : check if the given location is open for spawn new thing or not	
+# $v0 : 0 = is open
 check_if_location_is_open:
 
 	jr $ra
-		
+
+# function : print $a0 for testing
+testing_print:
+	li $v0 , 1
+	syscall		
+	jr $ra 		
