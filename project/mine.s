@@ -22,6 +22,10 @@ cursor_loc : .word 115 237 # location of the cursor
 cursor_gapY: .word 42 # gap in y axis for every option
 started : .word 0 # boolean : check for if the game is started 
 
+life : .word 1 # number of life
+life_mes : .asciiz "0" # base address for calling syscall 105 to show the life
+life_loc : .word 450 400 # location of the life
+
 timer_for_wait_screen : .word 0 # reference point for wait screen time 
 finish_waiting : .word 0 # boolean : check for if the waiting is finished
 
@@ -219,7 +223,7 @@ survive_loop:
 	li $a0, 0
 	jal enemy_shoot
 	jal update_score
-	
+	jal update_life
 	
 survive_game_refresh:
 	li $v0 , 101
@@ -397,12 +401,21 @@ process_instant_win:
 #--------------------------------------------------------------------
 
 enemy_shoot:
+	la $t0 , life
+	lw $t0 , ($t0)
+	li $t1 , 1
+	li $a3 , 0
+	bne $t0 , $t1 , not_die_yet
+	li $a3 , 1
+	
+not_die_yet:	
+
 	# call Enemyshot syscall
 	li $a1,0 #$a0 and $a1 will be used for storing brick walls hit by enemy bullet
 	li $v0, 112
 	syscall
 	li $t0,1
-	beq $v0, $t0, es_gameover # $v0=1 means enemy bullet hits the player or the home and the player loses.
+	beq $v0, $t0, es_enemy_hit_success # $v0=1 means enemy bullet hits the player or the home and the player loses.
 	li $t0,2
 	beq $v0, $t0, es_bullet_crash # $v0=2 means enemy bullet hits the player's bullet and they both disappear.
 	beq $v1, $zero, es_exit # $v1=1 or 2 denotes the number of brick walls the enemy bullet hits.
@@ -416,7 +429,20 @@ enemy_shoot:
 	sb $zero, 0($t0)
 es_exit:
 	jr $ra
+
+es_enemy_hit_success:
+	# life -1
+	la $t0 , life
+	lw $t1 , ($t0)
+	addi $t1 , $t1 , -1 
+	sw $t1 , ($t0) # save it back to the data 
+	
+	# if life go 0, game over
+	beq $t1 , $zero , es_gameover
+	j es_exit
+	
 es_gameover:
+
 	la $t0, game_over
 	li $t1,1
 	sw $t1,0($t0)
@@ -2246,6 +2272,11 @@ init_survive_mode:
 	la $t0 , buffered_move_key
 	sw $zero , ($t0)
 	
+	# set life to 3
+	la $t0 , life
+	li $t1 , 3
+	sw $t1 , ($t0)
+	
 	# create player
 	li $v0 , 103
 	la $t0 , player_id
@@ -2711,4 +2742,23 @@ generate_random_location:
 	
 	la $v0 , ($t5) # load x location to $v0 for return	
 
-	jr $ra			
+	jr $ra	
+	
+# function : update the life to the screen	
+update_life:
+	la $t0 , life
+	lw $t0 , ($t0)
+	
+	addi $t0 , $t0 , 48 # ascii 0 = 48
+	
+	sw $t0 , life_mes
+	
+	li $v0 , 105
+	li $a0 , 10
+	la $t0 , life_loc
+	lw $a1 , 0($t0)
+	lw $a2 , 4($t0)
+	la $a3 , life_mes
+	syscall
+
+	jr $ra					
