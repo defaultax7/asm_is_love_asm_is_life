@@ -213,6 +213,7 @@ survive_loop:
 	jal process_tank_shoot
 	jal process_move_input
 	jal game_move_enemy1
+	# $a0 , only enemy 1 shooting
 	li $a0, 0
 	jal enemy_shoot
 	jal update_score
@@ -2248,6 +2249,10 @@ init_survive_mode:
 
 # function : respawn enemy for survive mode
 respawn_enemy:
+	# push to stack
+	addi $sp , $sp , -4
+	sw $ra , ($sp)
+
 	# reset number of alive enemy
 	li $v0 , 1
 	la $t0 , enemy_alive_num
@@ -2260,12 +2265,21 @@ respawn_enemy:
 	# create the specified number of enemys
 	la $t0, survive_enemy_num
 	lw $a0, 0($t0) 
+	
+	jal generate_random_location
 
-	la $t0, enemy_ids
-	lw $a1, 0($t0)
-	lw $a2, 4($t0)
-	li $v0, 108
+	la $t0 , enemy_ids
+	lw $a0 , ($t0)
+	la $a1 , ($v0) # x location 
+	la $a2 , ($v1) # y location
+#	li $a1 , 0
+#	li $a2 , 0
+	li $v0, 131
 	syscall
+
+	# pop from stack
+	lw $ra , ($sp)
+	addi $sp , $sp , 4
 
 	jr $ra	
 	
@@ -2543,10 +2557,60 @@ checking_cheat_code_exit:
 # $v0 : 0 = is open
 check_if_location_is_open:
 
+	# push $ra to stack
+	addi $sp , $sp , -4
+	sw $ra , ($sp)
+
+	# check for bitmap first
+	jal get_bitmap_cell
+	
+	# pop $ra from stack
+	lw $ra , ($sp)
+	addi $sp , $sp , 4
+
 	jr $ra
 
 # function : print $a0 for testing
 testing_print:
 	li $v0 , 1
 	syscall		
-	jr $ra 		
+	jr $ra 	
+
+# function : generate random location inside the map
+# v0 : x loc , v1 : y loc
+generate_random_location:
+
+	# see as system time
+	li $v0 , 30
+	syscall
+	la $t1 , ($a0) # backup the system time for generating col later
+	la $a1 , ($a0)
+	li $a0 , 0
+	li $v0 , 40
+	syscall
+	
+	# hardcode number of row 
+	li $a1 , 25
+	
+	li $a0 , 0
+	li $v0 , 42
+	syscall
+	# x location (16x16 pixel per grid) , save it as $t5 and return as $v0 later
+	li $t0 , 16
+	mult $a0 , $t0 # x * 16
+	mflo $t5
+	
+	# hardcode number of rcol
+	li $a1 , 25
+	
+	li $a0 , 0
+	li $v0 , 42
+	syscall
+	# y location (16x16 pixel per grid) , save it as $v1 for return
+	li $t0 , 16
+	mult $a0 , $t0 # y * 16
+	mflo $v1
+	
+	la $v0 , ($t5) # load x location to $v0 for return	
+
+	jr $ra			
